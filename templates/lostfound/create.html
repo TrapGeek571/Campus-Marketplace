@@ -1,0 +1,307 @@
+{% extends 'base.html' %}
+
+{% block title %}Report Item - Campus Marketplace{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-plus-circle"></i> Report Lost or Found Item
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+    <label class="form-label fw-bold">Is this a lost or found item? *</label>
+    {% if form.item_type.errors %}
+    <div class="alert alert-danger">
+        {{ form.item_type.errors }}
+    </div>
+    {% endif %}
+    
+    <div class="form-check-group">
+        {% for choice in form.item_type.field.choices %}
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" 
+                   name="{{ form.item_type.name }}" 
+                   id="id_{{ form.item_type.name }}_{{ forloop.counter0 }}" 
+                   value="{{ choice.0 }}"
+                   {% if form.item_type.value == choice.0 or forloop.first and not form.item_type.value %}checked{% endif %}>
+            <label class="form-check-label" for="id_{{ form.item_type.name }}_{{ forloop.counter0 }}">
+                {% if choice.0 == 'lost' %}
+                <i class="bi bi-search text-danger"></i> Lost Item
+                {% else %}
+                <i class="bi bi-check-circle text-success"></i> Found Item
+                {% endif %}
+            </label>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Item Title *</label>
+                            {{ form.title }}
+                            {% if form.title.errors %}
+                            <div class="text-danger">
+                                {{ form.title.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Category *</label>
+                            {{ form.category }}
+                            {% if form.category.errors %}
+                            <div class="text-danger">
+                                {{ form.category.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Description *</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                        <div class="text-danger">
+                            {{ form.description.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3" id="lost-fields">
+                            <label class="form-label">Where did you lose it? *</label>
+                            {{ form.location_lost }}
+                            {% if form.location_lost.errors %}
+                            <div class="text-danger">
+                                {{ form.location_lost.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3" id="found-fields" style="display: none;">
+                            <label class="form-label">Where did you find it? *</label>
+                            {{ form.location_found }}
+                            {% if form.location_found.errors %}
+                            <div class="text-danger">
+                                {{ form.location_found.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3" id="lost-date-fields">
+                            <label class="form-label">When did you lose it? *</label>
+                            {{ form.date_lost }}
+                            {% if form.date_lost.errors %}
+                            <div class="text-danger">
+                                {{ form.date_lost.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3" id="found-date-fields" style="display: none;">
+                            <label class="form-label">When did you find it? *</label>
+                            {{ form.date_found }}
+                            {% if form.date_found.errors %}
+                            <div class="text-danger">
+                                {{ form.date_found.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Contact Email *</label>
+                            {{ form.contact_email }}
+                            {% if form.contact_email.errors %}
+                            <div class="text-danger">
+                                {{ form.contact_email.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Contact Phone (Optional)</label>
+                            {{ form.contact_phone }}
+                            {% if form.contact_phone.errors %}
+                            <div class="text-danger">
+                                {{ form.contact_phone.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Upload Image (Optional)</label>
+                        {{ form.image }}
+                        {% if form.image.errors %}
+                        <div class="text-danger">
+                            {{ form.image.errors }}
+                        </div>
+                        {% endif %}
+                        <small class="text-muted">Max size: 5MB. Supported formats: JPG, PNG</small>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'lostfound:index' %}" class="btn btn-secondary me-md-2">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Submit Report</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set max date for date inputs
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Set max attribute for date inputs
+    const dateLostInput = document.getElementById('id_date_lost');
+    const dateFoundInput = document.getElementById('id_date_found');
+    
+    if (dateLostInput) {
+        dateLostInput.max = today;
+    }
+    
+    if (dateFoundInput) {
+        dateFoundInput.max = today;
+    }
+    
+    // Real-time validation
+    function validateDate(input) {
+        const selectedDate = new Date(input.value);
+        const todayDate = new Date();
+        todayDate.setHours(0, 0, 0, 0); // Reset time to compare only dates
+        
+        if (selectedDate > todayDate) {
+            input.classList.add('is-invalid');
+            
+            // Create or update error message
+            let errorDiv = input.parentNode.querySelector('.date-error');
+            if (!errorDiv) {
+                errorDiv = document.createElement('div');
+                errorDiv.className = 'text-danger small date-error';
+                input.parentNode.appendChild(errorDiv);
+            }
+            errorDiv.textContent = 'Date cannot be in the future!';
+            return false;
+        } else {
+            input.classList.remove('is-invalid');
+            
+            // Remove error message if exists
+            const errorDiv = input.parentNode.querySelector('.date-error');
+            if (errorDiv) {
+                errorDiv.remove();
+            }
+            return true;
+        }
+    }
+    
+    // Add event listeners
+    if (dateLostInput) {
+        dateLostInput.addEventListener('change', function() {
+            validateDate(this);
+        });
+    }
+    
+    if (dateFoundInput) {
+        dateFoundInput.addEventListener('change', function() {
+            validateDate(this);
+        });
+    }
+    
+    // Form submission validation
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(event) {
+            let isValid = true;
+            
+            // Check date_lost if it's visible and has value
+            if (document.getElementById('lost-date-fields').style.display !== 'none') {
+                const dateLostInput = document.getElementById('id_date_lost');
+                if (dateLostInput && dateLostInput.value) {
+                    if (!validateDate(dateLostInput)) {
+                        isValid = false;
+                    }
+                }
+            }
+            
+            // Check date_found if it's visible and has value
+            if (document.getElementById('found-date-fields').style.display !== 'none') {
+                const dateFoundInput = document.getElementById('id_date_found');
+                if (dateFoundInput && dateFoundInput.value) {
+                    if (!validateDate(dateFoundInput)) {
+                        isValid = false;
+                    }
+                }
+            }
+            
+            if (!isValid) {
+                event.preventDefault();
+                // Scroll to first error
+                const firstError = form.querySelector('.is-invalid');
+                if (firstError) {
+                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        });
+    }
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const itemTypeRadios = document.querySelectorAll('input[name="item_type"]');
+    
+    function toggleFields() {
+        const selectedValue = document.querySelector('input[name="item_type"]:checked').value;
+        
+        if (selectedValue === 'lost') {
+            document.getElementById('lost-fields').style.display = 'block';
+            document.getElementById('lost-date-fields').style.display = 'block';
+            document.getElementById('found-fields').style.display = 'none';
+            document.getElementById('found-date-fields').style.display = 'none';
+            
+            // Make lost fields required
+            document.getElementById('id_location_lost').required = true;
+            document.getElementById('id_date_lost').required = true;
+            document.getElementById('id_location_found').required = false;
+            document.getElementById('id_date_found').required = false;
+        } else {
+            document.getElementById('lost-fields').style.display = 'none';
+            document.getElementById('lost-date-fields').style.display = 'none';
+            document.getElementById('found-fields').style.display = 'block';
+            document.getElementById('found-date-fields').style.display = 'block';
+            
+            // Make found fields required
+            document.getElementById('id_location_lost').required = false;
+            document.getElementById('id_date_lost').required = false;
+            document.getElementById('id_location_found').required = true;
+            document.getElementById('id_date_found').required = true;
+        }
+    }
+    
+    // Add event listeners to radio buttons
+    itemTypeRadios.forEach(radio => {
+        radio.addEventListener('change', toggleFields);
+    });
+    
+    // Initial toggle
+    if (itemTypeRadios.length > 0) {
+        toggleFields();
+    }
+});
+</script>
+{% endblock %}

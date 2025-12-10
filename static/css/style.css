@@ -1,0 +1,172 @@
+/* Custom Styles */
+:root {
+    --primary-color: #4361ee;
+    --secondary-color: #3a0ca3;
+    --accent-color: #f72585;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding-top: 20px;
+}
+
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.5rem;
+}
+
+.card {
+    transition: transform 0.3s;
+    border: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: var(--secondary-color);
+    border-color: var(--secondary-color);
+}
+
+/* Lost & Found specific styles */
+.badge-lost {
+    background-color: #dc3545;
+    color: white;
+}
+
+.badge-found {
+    background-color: #198754;
+    color: white;
+}
+
+.badge-returned {
+    background-color: #6c757d;
+    color: white;
+}
+
+.card-img-top {
+    object-fit: cover;
+    height: 200px;
+}
+
+/* Form radio buttons styling */
+.form-check-input:checked {
+    background-color: #4361ee;
+    border-color: #4361ee;
+}
+
+/* Hide/Show fields for lost/found */
+.field-hidden {
+    display: none;
+}
+
+/* Profile Page Styles */
+.profile-pic {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+}
+
+.default-profile-pic {
+    width: 150px;
+    height: 150px;
+    font-size: 3rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.trust-score-bar {
+    height: 20px;
+}
+
+/* Progress bar width will be set inline or via JS */
+.progress-bar {
+    transition: width 0.5s ease;
+}
+
+/* Dashboard stats cards */
+.stat-card {
+    transition: transform 0.3s;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+/* Date validation styles */
+input[type="date"]:invalid,
+input[type="date"].is-invalid {
+    border-color: #dc3545;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+
+input[type="date"]:focus:invalid {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+}
+
+.date-error {
+    margin-top: 0.25rem;
+    font-size: 0.875em;
+}
+
+/* Improved radio button styling */
+.form-check-input:checked {
+    background-color: #4361ee;
+    border-color: #4361ee;
+}
+
+.form-check-input:focus {
+    border-color: #4361ee;
+    box-shadow: 0 0 0 0.25rem rgba(67, 97, 238, 0.25);
+}
+
+.form-check-group {
+    display: flex;
+    gap: 2rem;
+    margin-top: 0.5rem;
+}
+
+.form-check-inline {
+    margin-right: 0;
+}
+
+.form-check-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s;
+    border: 2px solid transparent;
+}
+
+.form-check-input:checked + .form-check-label {
+    background-color: rgba(67, 97, 238, 0.1);
+    border-color: #4361ee;
+}
+
+/* Specific colors for lost/found */
+.form-check-input[value="lost"]:checked + .form-check-label {
+    background-color: rgba(220, 53, 69, 0.1);
+    border-color: #dc3545;
+}
+
+.form-check-input[value="found"]:checked + .form-check-label {
+    background-color: rgba(25, 135, 84, 0.1);
+    border-color: #198754;
+}

@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Profile - Campus Marketplace{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-pencil"></i> Edit Your Profile
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <h5 class="border-bottom pb-2 mb-3">Account Information</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Username *</label>
+                            {{ u_form.username }}
+                            {% if u_form.username.errors %}
+                            <div class="text-danger small">
+                                {{ u_form.username.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email *</label>
+                            {{ u_form.email }}
+                            {% if u_form.email.errors %}
+                            <div class="text-danger small">
+                                {{ u_form.email.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">First Name</label>
+                            {{ u_form.first_name }}
+                            {% if u_form.first_name.errors %}
+                            <div class="text-danger small">
+                                {{ u_form.first_name.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Last Name</label>
+                            {{ u_form.last_name }}
+                            {% if u_form.last_name.errors %}
+                            <div class="text-danger small">
+                                {{ u_form.last_name.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <h5 class="border-bottom pb-2 mb-3 mt-4">Profile Information</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Profile Picture</label>
+                            {% if user.profile.profile_pic %}
+                            <div class="mb-2">
+                                <img src="{{ user.profile.profile_pic.url }}" 
+                                     class="img-thumbnail" 
+                                     alt="Current profile picture" 
+                                     style="max-height: 150px; width:auto;">
+                            </div>
+                            {% endif %}
+                            {{ p_form.profile_pic }}
+                            {% if p_form.profile_pic.errors %}
+                            <div class="text-danger small">
+                                {{ p_form.profile_pic.errors }}
+                            </div>
+                            {% endif %}
+                            <small class="text-muted">Max size: 5MB. Square images work best.</small>
+                        </div>
+                        
+                        <div class="col-md-8 mb-3">
+                            <label class="form-label">Bio</label>
+                            {{ p_form.bio }}
+                            {% if p_form.bio.errors %}
+                            <div class="text-danger small">
+                                {{ p_form.bio.errors }}
+                            </div>
+                            {% endif %}
+                            <small class="text-muted">Tell us about yourself (max 500 characters)</small>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Phone Number</label>
+                            {{ p_form.phone }}
+                            {% if p_form.phone.errors %}
+                            <div class="text-danger small">
+                                {{ p_form.phone.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Student ID</label>
+                            {{ p_form.student_id }}
+                            {% if p_form.student_id.errors %}
+                            <div class="text-danger small">
+                                {{ p_form.student_id.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Course/Program</label>
+                            {{ p_form.course }}
+                            {% if p_form.course.errors %}
+                            <div class="text-danger small">
+                                {{ p_form.course.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Year of Study</label>
+                            {{ p_form.year_of_study }}
+                            {% if p_form.year_of_study.errors %}
+                            <div class="text-danger small">
+                                {{ p_form.year_of_study.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Campus</label>
+                        {{ p_form.campus }}
+                        {% if p_form.campus.errors %}
+                        <div class="text-danger small">
+                            {{ p_form.campus.errors }}
+                        </div>
+                        {% endif %}
+                        <small class="text-muted">E.g., Main Campus, City Campus, etc.</small>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a href="{% url 'accounts:profile' %}" class="btn btn-secondary me-md-2">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Update Profile
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

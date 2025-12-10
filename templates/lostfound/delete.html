@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete {{ item.title }} - Campus Marketplace{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-exclamation-triangle"></i> Confirm Deletion
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger">
+                    <h5><i class="bi bi-exclamation-octagon"></i> Warning: This action cannot be undone!</h5>
+                </div>
+                
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5>Item Details</h5>
+                        <p><strong>Title:</strong> {{ item.title }}</p>
+                        <p><strong>Type:</strong> {{ item.get_item_type_display }}</p>
+                        <p><strong>Category:</strong> {{ item.get_category_display }}</p>
+                        <p><strong>Posted by:</strong> {{ item.user.username }}</p>
+                        <p><strong>Date Posted:</strong> {{ item.created_at|date:"F j, Y" }}</p>
+                    </div>
+                </div>
+                
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="confirm_text" class="form-label">
+                            Type <strong>"DELETE"</strong> to confirm deletion:
+                        </label>
+                        <input type="text" class="form-control" id="confirm_text" name="confirm_text" 
+                               placeholder="Type DELETE here" required>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'lostfound:detail' item.pk %}" class="btn btn-secondary me-md-2">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-danger" id="deleteBtn" disabled>
+                            <i class="bi bi-trash"></i> Permanently Delete
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmInput = document.getElementById('confirm_text');
+    const deleteBtn = document.getElementById('deleteBtn');
+    
+    confirmInput.addEventListener('input', function() {
+        if (this.value.toUpperCase() === 'DELETE') {
+            deleteBtn.disabled = false;
+        } else {
+            deleteBtn.disabled = true;
+        }
+    });
+});
+</script>
+{% endblock %}

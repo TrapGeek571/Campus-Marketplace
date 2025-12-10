@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ item.title }} - Campus Marketplace{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <span class="badge {% if item.item_type == 'lost' %}bg-danger{% else %}bg-success{% endif %} fs-6 mb-2">
+                            {{ item.get_item_type_display|upper }}
+                        </span>
+                        <h1 class="card-title">{{ item.title }}</h1>
+                    </div>
+                    <span class="badge bg-secondary">{{ item.get_category_display }}</span>
+                </div>
+                
+                {% if item.image %}
+                <div class="mb-4">
+                    <img src="{{ item.image.url }}" class="img-fluid rounded" alt="{{ item.title }}" style="max-height: 400px; width: 100%; object-fit: contain;">
+                </div>
+                {% endif %}
+                
+                <div class="mb-4">
+                    <h4>Description</h4>
+                    <p class="fs-5">{{ item.description }}</p>
+                </div>
+                
+                <div class="row">
+                    {% if item.item_type == 'lost' %}
+                    <div class="col-md-6 mb-3">
+                        <h5><i class="bi bi-geo-alt text-danger"></i> Lost Location</h5>
+                        <p class="fs-5">{{ item.location_lost }}</p>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <h5><i class="bi bi-calendar text-danger"></i> Date Lost</h5>
+                        <p class="fs-5">{{ item.date_lost }}</p>
+                    </div>
+                    {% else %}
+                    <div class="col-md-6 mb-3">
+                        <h5><i class="bi bi-geo-alt text-success"></i> Found Location</h5>
+                        <p class="fs-5">{{ item.location_found }}</p>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <h5><i class="bi bi-calendar text-success"></i> Date Found</h5>
+                        <p class="fs-5">{{ item.date_found }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="alert {% if item.status == 'returned' %}alert-success{% else %}alert-info{% endif %}">
+                    <h5><i class="bi bi-info-circle"></i> Status: {{ item.get_status_display }}</h5>
+                    {% if item.status == 'returned' %}
+                    <p class="mb-0">This item has been successfully returned to its owner!</p>
+                    {% elif item.item_type == 'found' %}
+                    <p class="mb-0">Found something? Contact the person below if you think this is yours.</p>
+                    {% else %}
+                    <p class="mb-0">Lost something? Contact the person below if you've found this item.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-person-circle"></i> Contact Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+    <h6>Posted by:</h6>
+    <p>
+        <a href="{% url 'accounts:user_profile' item.user.username %}" class="text-decoration-none">
+            <i class="bi bi-person"></i> {{ item.user.username }}
+        </a>
+        {% if item.user.profile.is_verified %}
+        <span class="badge bg-success ms-1">
+            <i class="bi bi-check-circle"></i> Verified
+        </span>
+        {% endif %}
+    </p>
+</div>
+                <div class="mb-3">
+                    <h6>Contact Email:</h6>
+                    <p>{{ item.contact_email }}</p>
+                </div>
+                {% if item.contact_phone %}
+                <div class="mb-3">
+                    <h6>Contact Phone:</h6>
+                    <p>{{ item.contact_phone }}</p>
+                </div>
+                {% endif %}
+                <div class="mb-3">
+                    <h6>Posted on:</h6>
+                    <p>{{ item.created_at|date:"F j, Y" }}</p>
+                </div>
+                
+                {% if user == item.user or user.is_superuser %}
+                <div class="mt-4">
+                    <div class="d-grid gap-2">
+                        {% if user == item.user and item.status != 'returned' %}
+                        <form method="POST" action="{% url 'lostfound:mark_returned' item.pk %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check-circle"></i> Mark as Returned
+                            </button>
+                        </form>
+                        {% endif %}
+                        
+                        <a href="{% url 'lostfound:edit' item.pk %}" class="btn btn-warning">
+                            <i class="bi bi-pencil"></i> Edit Item
+                        </a>
+                        
+                        <a href="{% url 'lostfound:delete' item.pk %}" class="btn btn-danger">
+                            <i class="bi bi-trash"></i> Delete Item
+                        </a>
+                    </div>
+                    
+                    {% if user.is_superuser %}
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            <i class="bi bi-shield-check"></i> You are viewing this as an administrator.
+                        </small>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-body">
+                <h5>Safety Tips</h5>
+                <ul class="list-unstyled">
+                    <li class="mb-2"><i class="bi bi-shield-check text-success"></i> Meet in public places</li>
+                    <li class="mb-2"><i class="bi bi-shield-check text-success"></i> Verify item details carefully</li>
+                    <li class="mb-2"><i class="bi bi-shield-check text-success"></i> Don't share personal information</li>
+                    <li class="mb-2"><i class="bi bi-shield-check text-success"></i> Report suspicious activity</li>
+                </ul>
+                <a href="{% url 'lostfound:index' %}" class="btn btn-outline-primary w-100 mt-3">
+                    <i class="bi bi-arrow-left"></i> Back to Listings
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
