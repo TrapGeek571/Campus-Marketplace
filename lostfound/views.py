@@ -1,151 +1,160 @@
-from django.contrib.auth.models import User
-from django.db.models import Count
-from django.utils import timezone
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required , user_passes_test
-from django.core.exceptions import PermissionDenied
-from django.urls import reverse
+# lostfound/views.py
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.urls import reverse
 from django.db.models import Q
 from .models import LostItem
 from .forms import LostItemForm
-from accounts.decorators import login_required_message
 
-@login_required_message
-def index(request):
-    search_query = request.GET.get('search', '')
-    category = request.GET.get('category', '')
-    item_type = request.GET.get('type', '')
+@login_required
+def lost_found_home(request):
+    lost_items = LostItem.objects.filter(status='lost').order_by('-created_at')
+    found_items = LostItem.objects.filter(status='found').order_by('-created_at')
     
-    items = LostItem.objects.all()
-    
-    if search_query:
-        items = items.filter(
-            Q(title__icontains=search_query) |
-            Q(description__icontains=search_query) |
-            Q(location_lost__icontains=search_query) |
-            Q(location_found__icontains=search_query)
-        )
-    
-    if category:
-        items = items.filter(category=category)
-    
+    # Filter by item type
+    item_type = request.GET.get('type')
     if item_type:
-        items = items.filter(item_type=item_type)
+        lost_items = lost_items.filter(item_type=item_type)
+        found_items = found_items.filter(item_type=item_type)
     
-    # Separate lost and found items
-    lost_items = items.filter(item_type='lost', status='lost')
-    found_items = items.filter(item_type='found', status='found')
+    # Search functionality
+    search_query = request.GET.get('search')
+    if search_query:
+        lost_items = lost_items.filter(
+            Q(item_name__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(location__icontains=search_query)
+        )
+        found_items = found_items.filter(
+            Q(item_name__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(location__icontains=search_query)
+        )
     
     context = {
         'lost_items': lost_items,
         'found_items': found_items,
-        'search_query': search_query,
-        'category': category,
-        'item_type': item_type,
-        'categories': LostItem.CATEGORY_CHOICES,
+        'title': 'Lost & Found',
+        'search_query': search_query or '',
+        'selected_type': item_type,
     }
-    return render(request, 'lostfound/index.html', context)
+    return render(request, 'lostfound/home.html', context)
 
-@login_required_message
-def create(request):
+@login_required
+def item_detail(request, pk):
+    item = get_object_or_404(LostItem, pk=pk)
+    
+    # Get similar items (same type)
+    similar_items = LostItem.objects.filter(
+        item_type=item.item_type,
+        status=item.status
+    ).exclude(pk=item.pk).order_by('-created_at')[:3]
+    
+    context = {
+        'item': item,
+        'similar_items': similar_items,
+        'title': f"{item.item_name} - {item.get_status_display()}",
+    }
+    return render(request, 'lostfound/item_detail.html', context)
+
+@login_required
+def report_item(request):
     if request.method == 'POST':
         form = LostItemForm(request.POST, request.FILES)
         if form.is_valid():
             item = form.save(commit=False)
             item.user = request.user
-            item.status = item.item_type  # Set status based on item_type
             item.save()
-            messages.success(request, f'Your {item.item_type} item has been posted!')
-            return redirect('lostfound:index')
+            messages.success(request, f'Item reported as {item.get_status_display().lower()} successfully!')
+            return redirect('lostfound:item_detail', pk=item.pk)
+        else:
+            messages.error(request, 'Please correct the errors below.')
     else:
         form = LostItemForm()
     
-    return render(request, 'lostfound/create.html', {'form': form})
+    return render(request, 'lostfound/item_form.html', {
+        'form': form,
+        'title': 'Report Lost/Found Item',
+        'submit_text': 'Report Item',
+        'cancel_url': reverse('lostfound:home')
+    })
 
-@login_required_message
-def detail(request, pk):
-    item = get_object_or_404(LostItem, pk=pk)
-    return render(request, 'lostfound/detail.html', {'item': item})
-
-@login_required_message
-def mark_returned(request, pk):
-    item = get_object_or_404(LostItem, pk=pk)
-    
-    # Only allow if user owns the item or is marking their found item as returned
-    if request.user == item.user:
-        item.status = 'returned'
-        item.save()
-        messages.success(request, f'Item marked as returned!')
-    
-    return redirect('lostfound:detail', pk=pk)
-
-@login_required_message
-def edit(request, pk):
+@login_required
+def update_item(request, pk):
     item = get_object_or_404(LostItem, pk=pk)
     
-    # Check permissions
-    if not item.can_edit(request.user):
-        raise PermissionDenied("You don't have permission to edit this item.")
+    # Check ownership
+    if item.user != request.user:
+        messages.error(request, 'You do not have permission to edit this item.')
+        return redirect('lostfound:item_detail', pk=item.pk)
     
     if request.method == 'POST':
         form = LostItemForm(request.POST, request.FILES, instance=item)
         if form.is_valid():
-            # Don't change user when editing
             form.save()
-            messages.success(request, f'Item has been updated successfully!')
-            return redirect('lostfound:detail', pk=item.pk)
+            messages.success(request, 'Item updated successfully!')
+            return redirect('lostfound:item_detail', pk=item.pk)
+        else:
+            messages.error(request, 'Please correct the errors below.')
     else:
         form = LostItemForm(instance=item)
     
-    return render(request, 'lostfound/edit.html', {'form': form, 'item': item})
+    return render(request, 'lostfound/item_form.html', {
+        'form': form,
+        'title': 'Update Item',
+        'submit_text': 'Update Item',
+        'cancel_url': reverse('lostfound:item_detail', pk=item.pk)
+    })
 
-@login_required_message
-def delete(request, pk):
+@login_required
+def delete_item(request, pk):
     item = get_object_or_404(LostItem, pk=pk)
     
-    # Check permissions
-    if not item.can_delete(request.user):
-        raise PermissionDenied("You don't have permission to delete this item.")
+    # Check ownership
+    if item.user != request.user:
+        messages.error(request, 'You do not have permission to delete this item.')
+        return redirect('lostfound:item_detail', pk=item.pk)
     
     if request.method == 'POST':
-        # Double-check confirmation
-        confirm_text = request.POST.get('confirm_text', '').upper()
-        if confirm_text != 'DELETE':
-            messages.error(request, 'Please type "DELETE" to confirm deletion.')
-            return render(request, 'lostfound/delete.html', {'item': item})
-        
-        item_title = item.title
         item.delete()
-        messages.success(request, f'Item "{item_title}" has been deleted successfully!')
-        return redirect('lostfound:index')
+        messages.success(request, 'Item deleted successfully!')
+        return redirect('lostfound:home')
     
-    return render(request, 'lostfound/delete.html', {'item': item})
+    return render(request, 'lostfound/item_confirm_delete.html', {
+        'item': item,
+        'title': 'Delete Item'
+    })
 
-# Add admin-only view for managing all items
-@login_required_message
-@user_passes_test(lambda u: u.is_superuser)
-def admin_manage(request):
-    """Admin view to see and manage all items."""
-    items = LostItem.objects.all().order_by('-created_at')
-    users = User.objects.all()
+@login_required
+def my_reports(request):
+    items = LostItem.objects.filter(user=request.user).order_by('-created_at')
     
-    # Calculate counts
-    today = timezone.now().date()
-    week_ago = today - timezone.timedelta(days=7)
+    # Filter by status
+    status_filter = request.GET.get('status')
+    if status_filter:
+        items = items.filter(status=status_filter)
     
     context = {
         'items': items,
-        'total_count': items.count(),
-        'lost_count': items.filter(item_type='lost').count(),
-        'found_count': items.filter(item_type='found').count(),
-        'returned_count': items.filter(status='returned').count(),
-        'today_count': items.filter(created_at__date=today).count(),
-        'week_count': items.filter(created_at__gte=week_ago).count(),
-        'user_count': users.count(),
-        'active_users': users.filter(is_active=True).count(),
-        'top_users': User.objects.annotate(
-            item_count=Count('lostitem')
-        ).order_by('-item_count')[:5],
+        'title': 'My Reports',
+        'status_filter': status_filter,
     }
-    return render(request, 'lostfound/admin_manage.html', context)
+    return render(request, 'lostfound/my_reports.html', context)
+
+@login_required
+def update_status(request, pk, new_status):
+    item = get_object_or_404(LostItem, pk=pk)
+    
+    # Check ownership
+    if item.user != request.user:
+        messages.error(request, 'You do not have permission to update this item.')
+        return redirect('lostfound:item_detail', pk=item.pk)
+    
+    valid_statuses = ['lost', 'found', 'returned']
+    if new_status in valid_statuses:
+        item.status = new_status
+        item.save()
+        messages.success(request, f'Item status updated to {new_status}!')
+    
+    return redirect('lostfound:item_detail', pk=item.pk)

@@ -1,44 +1,39 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login, logout, authenticate
-from django.contrib.auth.models import User
-from django.contrib import messages
+# accounts/views.py
+from django.shortcuts import render, redirect
+from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count
-from .forms import CustomUserCreationForm, CustomAuthenticationForm, UserUpdateForm, ProfileUpdateForm
-from lostfound.models import LostItem
-from .models import Profile
+from django.contrib import messages
+from django.urls import reverse
+from .forms import CustomUserCreationForm, LoginForm, ProfileUpdateForm
+from .models import CustomUser
 
-# ========== HELPER FUNCTIONS ==========
-def get_or_create_profile(user):
-    """Get user profile or create if doesn't exist."""
-    try:
-        return user.profile
-    except Profile.DoesNotExist:
-        return Profile.objects.create(user=user)
-
-# ========== AUTHENTICATION VIEWS ==========
-def register(request):
-    """Handle user registration."""
+def register_view(request):
+    if request.user.is_authenticated:
+        return redirect('home')
+    
     if request.method == 'POST':
-        form = CustomUserCreationForm(request.POST)
+        form = CustomUserCreationForm(request.POST, request.FILES)
         if form.is_valid():
             user = form.save()
-            # Ensure profile is created
-            get_or_create_profile(user)
             login(request, user)
-            messages.success(request, f'Account created for {user.username}! Welcome to Campus Marketplace!')
+            messages.success(request, f'Account created successfully! Welcome, {user.username}.')
             return redirect('home')
         else:
             messages.error(request, 'Please correct the errors below.')
     else:
         form = CustomUserCreationForm()
     
-    return render(request, 'accounts/register.html', {'form': form})
+    return render(request, 'accounts/register.html', {
+        'form': form,
+        'title': 'Create Account'
+    })
 
 def login_view(request):
-    """Handle user login."""
+    if request.user.is_authenticated:
+        return redirect('home')
+    
     if request.method == 'POST':
-        form = CustomAuthenticationForm(request, data=request.POST)
+        form = LoginForm(request, data=request.POST)
         if form.is_valid():
             username = form.cleaned_data.get('username')
             password = form.cleaned_data.get('password')
@@ -51,81 +46,87 @@ def login_view(request):
         else:
             messages.error(request, 'Invalid username or password.')
     else:
-        form = CustomAuthenticationForm()
+        form = LoginForm()
     
-    return render(request, 'accounts/login.html', {'form': form})
+    return render(request, 'accounts/login.html', {
+        'form': form,
+        'title': 'Login'
+    })
 
+@login_required
 def logout_view(request):
-    """Handle user logout."""
     logout(request)
-    messages.success(request, 'You have been successfully logged out.')
+    messages.success(request, 'You have been logged out successfully.')
     return redirect('home')
 
-# ========== PROFILE VIEWS ==========
 @login_required
-def profile(request):
-    """Display user profile with stats."""
-    user = request.user
-    profile_obj = get_or_create_profile(user)
+def profile_view(request):
+    # Get counts for the profile page
+    from marketplace.models import Product
+    from lostfound.models import LostItem
+    from housing.models import Property
+    from food.models import Restaurant
     
-    # Get user's stats
-    lost_items_count = LostItem.objects.filter(user=user).count()
-    lost_items = LostItem.objects.filter(user=user, item_type='lost').count()
-    found_items = LostItem.objects.filter(user=user, item_type='found').count()
-    returned_items = LostItem.objects.filter(user=user, status='returned').count()
+    product_count = Product.objects.filter(seller=request.user).count()
+    lostitem_count = LostItem.objects.filter(user=request.user).count()
+    property_count = Property.objects.filter(owner=request.user).count()
+    restaurant_count = Restaurant.objects.filter(created_by=request.user).count()
+    
+    if request.method == 'POST':
+        form = ProfileUpdateForm(request.POST, request.FILES, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your profile has been updated!')
+            return redirect('accounts:profile')
+    else:
+        form = ProfileUpdateForm(instance=request.user)
+    
+    return render(request, 'accounts/profile.html', {
+        'form': form,
+        'product_count': product_count,
+        'lostitem_count': lostitem_count,
+        'property_count': property_count,
+        'restaurant_count': restaurant_count,
+        'title': 'My Profile'
+    })
+
+@login_required
+def dashboard_view(request):
+    user = request.user
+    
+    # Debug: Print to console
+    print(f"Dashboard accessed by: {user.username}")
+    
+    # Get counts for dashboard
+    from marketplace.models import Product
+    from lostfound.models import LostItem
+    from housing.models import Property
+    from food.models import Restaurant
+    
+    try:
+        product_count = Product.objects.filter(seller=user).count()
+        lostitem_count = LostItem.objects.filter(user=user).count()
+        property_count = Property.objects.filter(owner=user).count()
+        restaurant_count = Restaurant.objects.filter(created_by=user).count()
+        
+        print(f"Counts: products={product_count}, lost={lostitem_count}, properties={property_count}, restaurants={restaurant_count}")
+    except Exception as e:
+        print(f"Error fetching counts: {e}")
+        product_count = 0
+        lostitem_count = 0
+        property_count = 0
+        restaurant_count = 0
     
     context = {
         'user': user,
-        'profile': profile_obj,
-        'lost_items_count': lost_items_count,
-        'lost_items': lost_items,
-        'found_items': found_items,
-        'returned_items': returned_items,
-    }
-    return render(request, 'accounts/profile.html', context)
-
-@login_required
-def edit_profile(request):
-    """Handle profile editing."""
-    user = request.user
-    profile_obj = get_or_create_profile(user)
-    
-    if request.method == 'POST':
-        u_form = UserUpdateForm(request.POST, instance=request.user)
-        p_form = ProfileUpdateForm(request.POST, request.FILES, instance=profile_obj)
-        
-        if u_form.is_valid() and p_form.is_valid():
-            u_form.save()
-            p_form.save()
-            messages.success(request, 'Your profile has been updated!')
-            return redirect('accounts:profile')
-        else:
-            messages.error(request, 'Please correct the errors below.')
-    else:
-        u_form = UserUpdateForm(instance=request.user)
-        p_form = ProfileUpdateForm(instance=profile_obj)
-    
-    context = {
-        'u_form': u_form,
-        'p_form': p_form,
+        'product_count': product_count,
+        'lostitem_count': lostitem_count,
+        'property_count': property_count,
+        'restaurant_count': restaurant_count,
+        'title': 'Dashboard'
     }
     
-    return render(request, 'accounts/edit_profile.html', context)
-
-@login_required
-def user_profile(request, username):
-    """View other users' public profiles."""
-    user = get_object_or_404(User, username=username)
-    profile_obj = get_or_create_profile(user)
+    # Debug: Print context
+    print(f"Context being sent: {context}")
     
-    # Only show active lost/found items (not returned)
-    user_items = LostItem.objects.filter(user=user).exclude(status='returned')[:5]
-    total_items = LostItem.objects.filter(user=user).count()
-    
-    context = {
-        'viewed_user': user,
-        'user_profile': profile_obj,
-        'user_items': user_items,
-        'total_items': total_items,
-    }
-    return render(request, 'accounts/user_profile.html', context)
+    return render(request, 'accounts/dashboard.html', context)

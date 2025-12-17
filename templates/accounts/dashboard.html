@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Sidebar -->
+    <div class="col-md-3 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                {% if user.profile_picture %}
+                <img src="{{ user.profile_picture.url }}" alt="{{ user.username }}" class="rounded-circle mb-3" width="120" height="120" style="object-fit: cover;">
+                {% else %}
+                <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 120px; height: 120px;">
+                    <span class="h2">{{ user.username|first|upper }}</span>
+                </div>
+                {% endif %}
+                <h4>{{ user.username }}</h4>
+                <p class="text-muted">{{ user.get_user_type_display }}</p>
+                {% if user.student_id %}
+                <p class="small"><i class="bi bi-person-badge"></i> {{ user.student_id }}</p>
+                {% endif %}
+                <a href="{% url 'accounts:profile' %}" class="btn btn-outline-primary btn-sm">Edit Profile</a>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">Quick Stats</h6>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <a href="{% url 'marketplace:my_products' %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-cart text-primary me-2"></i> My Products</span>
+                        <span class="badge bg-primary rounded-pill">{{ product_count }}</span>
+                    </a>
+                    <a href="{% url 'lostfound:my_reports' %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-search text-warning me-2"></i> My Reports</span>
+                        <span class="badge bg-warning rounded-pill">{{ lostitem_count }}</span>
+                    </a>
+                    <a href="{% url 'housing:my_properties' %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-house text-success me-2"></i> My Properties</span>
+                        <span class="badge bg-success rounded-pill">{{ property_count }}</span>
+                    </a>
+                    <a href="{% url 'food:my_restaurants' %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-egg-fried text-danger me-2"></i> My Restaurants</span>
+                        <span class="badge bg-danger rounded-pill">{{ restaurant_count }}</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="col-md-9">
+        <!-- Welcome Card -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="card-title mb-2">Welcome back, {{ user.username }}!</h3>
+                        <p class="card-text text-muted">
+                            <i class="bi bi-calendar-check"></i> Member since {{ user.date_joined|date:"F j, Y" }}
+                        </p>
+                    </div>
+                    <div class="text-end">
+                        <p class="mb-1">Campus Marketplace Score</p>
+                        <div class="display-6 text-primary">
+                            {{ product_count|add:lostitem_count|add:property_count|add:restaurant_count }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Access Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="card text-center border-primary">
+                    <div class="card-body">
+                        <i class="bi bi-cart display-5 text-primary mb-3"></i>
+                        <h5>Marketplace</h5>
+                        <p class="small">Buy & sell with students</p>
+                        <a href="{% url 'marketplace:home' %}" class="btn btn-outline-primary btn-sm">Go to Marketplace</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center border-warning">
+                    <div class="card-body">
+                        <i class="bi bi-search display-5 text-warning mb-3"></i>
+                        <h5>Lost & Found</h5>
+                        <p class="small">Report lost items</p>
+                        <a href="{% url 'lostfound:home' %}" class="btn btn-outline-warning btn-sm">Go to Lost & Found</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center border-success">
+                    <div class="card-body">
+                        <i class="bi bi-house display-5 text-success mb-3"></i>
+                        <h5>Housing</h5>
+                        <p class="small">Find accommodation</p>
+                        <a href="{% url 'housing:home' %}" class="btn btn-outline-success btn-sm">Go to Housing</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center border-danger">
+                    <div class="card-body">
+                        <i class="bi bi-egg-fried display-5 text-danger mb-3"></i>
+                        <h5>Food</h5>
+                        <p class="small">Discover restaurants</p>
+                        <a href="{% url 'food:home' %}" class="btn btn-outline-danger btn-sm">Go to Food</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Recent Activity</h5>
+            </div>
+            <div class="card-body">
+                {% if product_count == 0 and lostitem_count == 0 and property_count == 0 and restaurant_count == 0 %}
+                <div class="text-center py-4">
+                    <i class="bi bi-inbox display-4 text-muted mb-3"></i>
+                    <h5>No Activity Yet</h5>
+                    <p class="text-muted">Start exploring the campus marketplace!</p>
+                    <div class="mt-3">
+                        <a href="{% url 'marketplace:home' %}" class="btn btn-primary me-2">Browse Marketplace</a>
+                        <a href="{% url 'marketplace:create_product' %}" class="btn btn-outline-primary">Sell Your First Item</a>
+                    </div>
+                </div>
+                {% else %}
+                <div class="list-group">
+                    {% if product_count > 0 %}
+                    <a href="{% url 'marketplace:my_products' %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1"><i class="bi bi-cart text-primary me-2"></i>Your Marketplace Listings</h6>
+                            <span class="badge bg-primary rounded-pill">{{ product_count }}</span>
+                        </div>
+                        <p class="mb-1">You have {{ product_count }} item{{ product_count|pluralize }} listed for sale</p>
+                        <small class="text-muted">Click to view and manage your listings</small>
+                    </a>
+                    {% endif %}
+                    
+                    {% if lostitem_count > 0 %}
+                    <a href="{% url 'lostfound:my_reports' %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1"><i class="bi bi-search text-warning me-2"></i>Your Lost & Found Reports</h6>
+                            <span class="badge bg-warning rounded-pill">{{ lostitem_count }}</span>
+                        </div>
+                        <p class="mb-1">You have {{ lostitem_count }} report{{ lostitem_count|pluralize }}</p>
+                        <small class="text-muted">Click to view your reports</small>
+                    </a>
+                    {% endif %}
+                    
+                    {% if property_count > 0 %}
+                    <a href="{% url 'housing:my_properties' %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1"><i class="bi bi-house text-success me-2"></i>Your Property Listings</h6>
+                            <span class="badge bg-success rounded-pill">{{ property_count }}</span>
+                        </div>
+                        <p class="mb-1">You have {{ property_count }} propert{{ property_count|pluralize:"y,ies" }} listed</p>
+                        <small class="text-muted">Click to manage your properties</small>
+                    </a>
+                    {% endif %}
+                    
+                    {% if restaurant_count > 0 %}
+                    <a href="{% url 'food:my_restaurants' %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1"><i class="bi bi-egg-fried text-danger me-2"></i>Your Restaurant Listings</h6>
+                            <span class="badge bg-danger rounded-pill">{{ restaurant_count }}</span>
+                        </div>
+                        <p class="mb-1">You have {{ restaurant_count }} restaurant{{ restaurant_count|pluralize }} listed</p>
+                        <small class="text-muted">Click to manage your restaurants</small>
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

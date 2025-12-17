@@ -1,1 +1,7 @@
-black
+Django>=4.2
+cloudinary
+django-cloudinary-storage
+Pillow
+crispy-bootstrap5
+django-crispy-forms
+python-dotenv

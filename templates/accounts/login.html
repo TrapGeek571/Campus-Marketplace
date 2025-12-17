@@ -1,42 +1,19 @@
 {% extends 'base.html' %}
+{% load crispy_forms_tags %}
 
 {% block title %}Login - Campus Marketplace{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-6 col-lg-5">
-        <div class="card shadow">
+        <div class="card shadow border-0">
             <div class="card-header bg-primary text-white">
-                <h4 class="mb-0"><i class="bi bi-box-arrow-in-right"></i> Login to Your Account</h4>
+                <h4 class="mb-0"><i class="bi bi-box-arrow-in-right me-2"></i>Login to Your Account</h4>
             </div>
-            <div class="card-body">
-                <form method="POST">
+            <div class="card-body p-4">
+                <form method="post" novalidate>
                     {% csrf_token %}
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Username</label>
-                        {{ form.username }}
-                        {% if form.username.errors %}
-                        <div class="text-danger small">
-                            {{ form.username.errors }}
-                        </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Password</label>
-                        {{ form.password }}
-                        {% if form.password.errors %}
-                        <div class="text-danger small">
-                            {{ form.password.errors }}
-                        </div>
-                        {% endif %}
-                        <div class="text-end">
-                            <small><a href="#" class="text-muted">Forgot password?</a></small>
-                        </div>
-                    </div>
-                    
-                    <input type="hidden" name="next" value="{{ request.GET.next }}">
+                    {{ form|crispy }}
                     
                     <div class="d-grid gap-2 mt-4">
                         <button type="submit" class="btn btn-primary btn-lg">
@@ -45,14 +22,36 @@
                     </div>
                 </form>
                 
+                <div class="mt-4 text-center">
+                    <p class="mb-2">
+                        <a href="#" class="text-decoration-none">Forgot your password?</a>
+                    </p>
+                    <p class="mb-0">
+                        Don't have an account? 
+                        <a href="{% url 'accounts:register' %}" class="text-decoration-none fw-bold">Register here</a>
+                    </p>
+                </div>
+                
                 <hr class="my-4">
                 
                 <div class="text-center">
-                    <p class="mb-2">Don't have an account yet?</p>
-                    <a href="{% url 'accounts:register' %}" class="btn btn-outline-primary">
-                        <i class="bi bi-person-plus"></i> Create Account
-                    </a>
+                    <p class="text-muted small mb-2">Or login with</p>
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-outline-dark">
+                            <i class="bi bi-google me-2"></i> Google
+                        </button>
+                        <button type="button" class="btn btn-outline-primary">
+                            <i class="bi bi-facebook me-2"></i> Facebook
+                        </button>
+                    </div>
                 </div>
+            </div>
+        </div>
+        
+        <div class="mt-4 text-center">
+            <div class="alert alert-info">
+                <h6><i class="bi bi-info-circle me-2"></i>Student Access</h6>
+                <p class="small mb-0">Use your student email for verification and access to campus-only features.</p>
             </div>
         </div>
     </div>

@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block title %}Campus Marketplace{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Student Marketplace</h2>
+    {% if user.is_authenticated %}
+    <a href="{% url 'marketplace:create_product' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Sell an Item
+    </a>
+    {% endif %}
+</div>
+
+<!-- Search & Filter Bar -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-8">
+                <input type="text" name="search" class="form-control" placeholder="Search for items..." value="{{ request.GET.search }}">
+            </div>
+            <div class="col-md-3">
+                <select name="category" class="form-select">
+                    <option value="">All Categories</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}" {% if request.GET.category == cat.id|stringformat:"s" %}selected{% endif %}>
+                        {{ cat.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-1">
+                <button type="submit" class="btn btn-outline-primary w-100">Filter</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Product Grid -->
+<div class="row">
+    {% for product in products %}
+    <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+        <div class="card h-100">
+            {% if product.image %}
+            <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.title }}" style="height: 180px; object-fit: cover;">
+            {% else %}
+            <div class="text-center py-5 bg-light text-muted">No Image</div>
+            {% endif %}
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title">{{ product.title|truncatechars:30 }}</h5>
+                <p class="card-text text-muted small">{{ product.description|truncatechars:60 }}</p>
+                <div class="mt-auto">
+                    <p class="fw-bold text-primary mb-1">KSh {{ product.price }}</p>
+                    <p class="small mb-2">
+                        <span class="badge bg-secondary">{{ product.get_condition_display }}</span>
+                        {% if product.is_sold %}<span class="badge bg-danger">Sold</span>{% endif %}
+                    </p>
+                    <a href="{% url 'marketplace:product_detail' product.pk %}" class="btn btn-outline-primary btn-sm w-100">View Details</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-info text-center">No products listed yet. Be the first to sell something!</div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

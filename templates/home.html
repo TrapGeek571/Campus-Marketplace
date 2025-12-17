@@ -1,182 +1,233 @@
 {% extends 'base.html' %}
-{% load static %}
 
-{% block title %}Campus Marketplace - Connect, Trade, Find{% endblock %}
+{% block title %}Welcome to Campus Marketplace{% endblock %}
 
 {% block content %}
-{% if user.is_authenticated %}
-<!-- Content for LOGGED IN users -->
-<div class="row align-items-center">
-    <div class="col-md-6">
-        <h1 class="display-4 fw-bold mb-4">
-            Welcome back, <span class="text-primary">{{ user.username }}</span>!
-        </h1>
-        <p class="lead mb-4">
-            Ready to continue your campus journey? Check out what's new!
-        </p>
-        <div class="d-grid gap-2 d-md-flex">
-            <a href="{% url 'lostfound:index' %}" class="btn btn-primary btn-lg px-4">
-                <i class="bi bi-binoculars"></i> Lost & Found
-            </a>
-            <a href="{% url 'accounts:profile' %}" class="btn btn-outline-primary btn-lg px-4">
-                <i class="bi bi-person"></i> My Profile
-            </a>
+<!-- Hero Section - Visible to All -->
+<div class="hero-section text-center py-5 bg-primary text-white rounded mb-5">
+    <h1 class="display-4 mb-4">Welcome to Campus Marketplace</h1>
+    <p class="lead mb-4">Your exclusive campus community platform for buying, selling, finding, and connecting</p>
+    
+    {% if not user.is_authenticated %}
+    <div class="mb-4">
+        <a href="{% url 'accounts:register' %}" class="btn btn-light btn-lg me-2">
+            <i class="bi bi-person-plus"></i> Join Campus Community
+        </a>
+        <a href="{% url 'accounts:login' %}" class="btn btn-outline-light btn-lg">
+            <i class="bi bi-box-arrow-in-right"></i> Student Login
+        </a>
+    </div>
+    {% else %}
+    <p class="h4">Welcome back, {{ user.username }}! Ready to explore campus?</p>
+    {% endif %}
+</div>
+
+{% if not user.is_authenticated %}
+<!-- Show to Non-Logged Users -->
+<div class="row">
+    <div class="col-md-12 mb-5">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h4><i class="bi bi-shield-check"></i> Campus-Exclusive Platform</h4>
+            </div>
+            <div class="card-body">
+                <p class="lead">This platform is exclusively for verified campus students and staff. Please register or login to access all features.</p>
+                
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <h5>Why Register?</h5>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item"><i class="bi bi-check-circle-fill text-success"></i> Buy & sell with trusted campus members</li>
+                            <li class="list-group-item"><i class="bi bi-check-circle-fill text-success"></i> Report lost items to campus community</li>
+                            <li class="list-group-item"><i class="bi bi-check-circle-fill text-success"></i> Find verified housing near campus</li>
+                            <li class="list-group-item"><i class="bi bi-check-circle-fill text-success"></i> Access student-only restaurant deals</li>
+                            <li class="list-group-item"><i class="bi bi-check-circle-fill text-success"></i> Secure campus-only environment</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>How to Get Started</h5>
+                        <div class="steps">
+                            <div class="step mb-3">
+                                <span class="badge bg-primary rounded-circle p-2">1</span>
+                                <strong>Register</strong> with your campus email
+                            </div>
+                            <div class="step mb-3">
+                                <span class="badge bg-primary rounded-circle p-2">2</span>
+                                <strong>Verify</strong> your student status
+                            </div>
+                            <div class="step mb-3">
+                                <span class="badge bg-primary rounded-circle p-2">3</span>
+                                <strong>Access</strong> all campus marketplace features
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info mt-4">
+                            <i class="bi bi-info-circle"></i>
+                            <strong>Note:</strong> All features require campus verification for security.
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-    <div class="col-md-6">
-        <img src="{% static 'images/hero.svg' %}" alt="Campus Life" class="img-fluid">
+</div>
+
+<!-- Preview of Features (Images/Descriptions only) -->
+<div class="row">
+    <div class="col-12">
+        <h3 class="mb-4">What's Inside Campus Marketplace?</h3>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-cart display-4 text-muted mb-3"></i>
+                <h5 class="card-title">Student Marketplace</h5>
+                <p class="card-text small">Buy and sell textbooks, electronics, furniture, and more with fellow students.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-search display-4 text-muted mb-3"></i>
+                <h5 class="card-title">Lost & Found</h5>
+                <p class="card-text small">Report lost items or help return found items within the campus community.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-house display-4 text-muted mb-3"></i>
+                <h5 class="card-title">Campus Housing</h5>
+                <p class="card-text small">Find verified apartments, rooms, and hostels near campus.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-egg-fried display-4 text-muted mb-3"></i>
+                <h5 class="card-title">Campus Food</h5>
+                <p class="card-text small">Discover restaurants with student discounts and campus delivery.</p>
+            </div>
+        </div>
     </div>
 </div>
+
 {% else %}
-<!-- Content for GUESTS / NOT LOGGED IN -->
-<div class="row align-items-center">
-    <div class="col-md-6">
-        <h1 class="display-4 fw-bold mb-4">
-            Your <span class="text-primary">Campus</span><br>
-            <span class="text-secondary">Marketplace</span>
-        </h1>
-        <p class="lead mb-4">
-            Join thousands of students buying, selling, finding lost items, 
-            discovering housing, and getting amazing food deals - all in one place!
-        </p>
-        <div class="d-grid gap-2 d-md-flex">
-            <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-lg px-4">
-                <i class="bi bi-person-plus"></i> Join Now - It's Free!
-            </a>
-            <a href="{% url 'accounts:login' %}" class="btn btn-outline-primary btn-lg px-4">
-                <i class="bi bi-box-arrow-in-right"></i> Login
-            </a>
-        </div>
-        
-        <div class="mt-5">
-            <h5>Why Join Campus Marketplace?</h5>
-            <ul class="list-unstyled">
-                <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Secure campus-only community</li>
-                <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Find lost items & return them</li>
-                <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Buy & sell at student-friendly prices</li>
-                <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Discover housing near campus</li>
-                <li class="mb-2"><i class="bi bi-check-circle-fill text-success"></i> Get exclusive food deals</li>
-            </ul>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <img src="{% static 'images/campus_community.svg' %}" alt="Campus Community" class="img-fluid">
-    </div>
-</div>
+<!-- SHOW ONLY TO LOGGED-IN USERS -->
 
-<!-- Features Preview for Guests -->
-<div class="row mt-5 pt-5">
-    <div class="col-12 text-center mb-4">
-        <h2>Everything You Need, In One Place</h2>
-        <p class="lead">Get a sneak peek of what awaits after you join!</p>
-    </div>
-    
-    <div class="col-md-3">
-        <div class="card h-100 border-0 shadow-sm">
-            <div class="card-body text-center">
-                <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
-                    <i class="bi bi-cart fs-3"></i>
+<!-- Quick Stats -->
+<div class="row mb-5">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title mb-4">Quick Access</h4>
+                <div class="row">
+                    <div class="col-md-3 text-center mb-3">
+                        <a href="{% url 'marketplace:home' %}" class="btn btn-primary btn-lg w-100">
+                            <i class="bi bi-cart h1 d-block mb-2"></i>
+                            Marketplace
+                        </a>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <a href="{% url 'lostfound:home' %}" class="btn btn-warning btn-lg w-100">
+                            <i class="bi bi-search h1 d-block mb-2"></i>
+                            Lost & Found
+                        </a>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <a href="{% url 'housing:home' %}" class="btn btn-success btn-lg w-100">
+                            <i class="bi bi-house h1 d-block mb-2"></i>
+                            Housing
+                        </a>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <a href="{% url 'food:home' %}" class="btn btn-danger btn-lg w-100">
+                            <i class="bi bi-egg-fried h1 d-block mb-2"></i>
+                            Food
+                        </a>
+                    </div>
                 </div>
-                <h5>Marketplace</h5>
-                <p>Buy textbooks, electronics, and more from fellow students at great prices.</p>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-3">
-        <div class="card h-100 border-0 shadow-sm">
-            <div class="card-body text-center">
-                <div class="bg-success bg-opacity-10 text-success rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
-                    <i class="bi bi-binoculars fs-3"></i>
-                </div>
-                <h5>Lost & Found</h5>
-                <p>Lost your keys? Found a phone? Reunite items with their owners.</p>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-3">
-        <div class="card h-100 border-0 shadow-sm">
-            <div class="card-body text-center">
-                <div class="bg-warning bg-opacity-10 text-warning rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
-                    <i class="bi bi-house fs-3"></i>
-                </div>
-                <h5>Housing</h5>
-                <p>Find rooms, apartments, and houses near campus. Verified listings only.</p>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-3">
-        <div class="card h-100 border-0 shadow-sm">
-            <div class="card-body text-center">
-                <div class="bg-danger bg-opacity-10 text-danger rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
-                    <i class="bi bi-egg-fried fs-3"></i>
-                </div>
-                <h5>Food Deals</h5>
-                <p>Special offers and discounts from campus restaurants. Save on meals!</p>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Call to Action -->
-<div class="row mt-5">
-    <div class="col-md-8 mx-auto text-center">
-        <div class="card bg-primary text-white">
-            <div class="card-body py-5">
-                <h2 class="display-6 mb-3">Ready to Join Our Community?</h2>
-                <p class="lead mb-4">Over 1,000 students are already using Campus Marketplace!</p>
-                <a href="{% url 'accounts:register' %}" class="btn btn-light btn-lg px-5">
-                    <i class="bi bi-person-plus"></i> Create Free Account
-                </a>
-                <p class="mt-3 mb-0">
-                    <small>Already have an account? <a href="{% url 'accounts:login' %}" class="text-white fw-bold">Login here</a></small>
-                </p>
+<!-- Recent Activity Section -->
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Recent Campus Activity</h5>
+            </div>
+            <div class="card-body">
+                <!-- Marketplace Items -->
+                <div class="mb-4">
+                    <h6><i class="bi bi-cart text-primary"></i> New in Marketplace</h6>
+                    <div class="row">
+                        <!-- You can add actual recent items here -->
+                        <div class="col-md-4 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <p class="card-text">Calculus Textbook</p>
+                                    <small class="text-muted">KSh 1,500</small>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Add more items dynamically -->
+                    </div>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6>Need to sell something?</h6>
+                                <a href="{% url 'marketplace:create_product' %}" class="btn btn-outline-primary btn-sm">Sell Item</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6>Lost an item?</h6>
+                                <a href="{% url 'lostfound:report_item' %}" class="btn btn-outline-warning btn-sm">Report Now</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</div>
-{% endif %}
-
-<!-- If user is authenticated, show the features section -->
-{% if user.is_authenticated %}
-<!-- Features Section (same as before but for logged in users) -->
-<div class="row mt-5 pt-5">
-    <div class="col-md-3">
-        <div class="text-center p-4">
-            <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
-                <i class="bi bi-cart fs-3"></i>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Your Dashboard</h5>
             </div>
-            <h4>Buy & Sell</h4>
-            <p>Textbooks, electronics, furniture - find great deals!</p>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="text-center p-4">
-            <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
-                <i class="bi bi-binoculars fs-3"></i>
+            <div class="card-body">
+                <div class="list-group">
+                    <a href="{% url 'marketplace:my_products' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-bag me-2"></i> My Products
+                        <span class="badge bg-primary float-end">0</span>
+                    </a>
+                    <a href="{% url 'lostfound:my_reports' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-megaphone me-2"></i> My Reports
+                        <span class="badge bg-warning float-end">0</span>
+                    </a>
+                    <a href="{% url 'housing:my_properties' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-house-door me-2"></i> My Properties
+                        <span class="badge bg-success float-end">0</span>
+                    </a>
+                    <a href="{% url 'food:my_restaurants' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-shop me-2"></i> My Restaurants
+                        <span class="badge bg-danger float-end">0</span>
+                    </a>
+                </div>
             </div>
-            <h4>Lost & Found</h4>
-            <p>Lost something? Found something? Reunite items with owners.</p>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="text-center p-4">
-            <div class="bg-warning text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
-                <i class="bi bi-house fs-3"></i>
-            </div>
-            <h4>Housing</h4>
-            <p>Find rooms, apartments, and houses near campus.</p>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="text-center p-4">
-            <div class="bg-danger text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
-                <i class="bi bi-egg-fried fs-3"></i>
-            </div>
-            <h4>Food Deals</h4>
-            <p>Special offers and discounts from campus restaurants.</p>
         </div>
     </div>
 </div>

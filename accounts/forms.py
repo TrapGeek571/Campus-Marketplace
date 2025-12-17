@@ -1,50 +1,52 @@
+# accounts/forms.py
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from django.contrib.auth.models import User
-from .models import Profile
+from .models import CustomUser
 
 class CustomUserCreationForm(UserCreationForm):
-    email = forms.EmailField(required=True)
-    first_name = forms.CharField(max_length=30, required=True)
-    last_name = forms.CharField(max_length=30, required=True)
+    email = forms.EmailField(required=True, widget=forms.EmailInput(attrs={
+        'class': 'form-control',
+        'placeholder': 'Email address'
+    }))
     
     class Meta:
-        model = User
-        fields = ('username', 'email', 'first_name', 'last_name', 'password1', 'password2')
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Add Bootstrap classes to all fields
-        for field_name in self.fields:
-            self.fields[field_name].widget.attrs.update({'class': 'form-control'})
-
-class CustomAuthenticationForm(AuthenticationForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Add Bootstrap classes to all fields
-        for field_name in self.fields:
-            self.fields[field_name].widget.attrs.update({'class': 'form-control'})
-
-class UserUpdateForm(forms.ModelForm):
-    class Meta:
-        model = User
-        fields = ['username', 'email', 'first_name', 'last_name']
+        model = CustomUser
+        fields = ('username', 'email', 'user_type', 'student_id', 'phone_number', 'profile_picture', 'password1', 'password2')
         widgets = {
-            'username': forms.TextInput(attrs={'class': 'form-control'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'username': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Username'}),
+            'user_type': forms.Select(attrs={'class': 'form-control'}),
+            'student_id': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Student ID (if applicable)'}),
+            'phone_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Phone Number'}),
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['password1'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Password'})
+        self.fields['password2'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Confirm Password'})
+
+class LoginForm(AuthenticationForm):
+    username = forms.CharField(widget=forms.TextInput(attrs={
+        'class': 'form-control',
+        'placeholder': 'Username'
+    }))
+    password = forms.CharField(widget=forms.PasswordInput(attrs={
+        'class': 'form-control',
+        'placeholder': 'Password'
+    }))
 
 class ProfileUpdateForm(forms.ModelForm):
     class Meta:
-        model = Profile
-        fields = ['bio', 'profile_pic', 'phone', 'student_id', 'course', 'year_of_study', 'campus']
+        model = CustomUser
+        fields = ['email', 'user_type', 'student_id', 'phone_number', 'profile_picture']
         widgets = {
-            'bio': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
-            'phone': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'user_type': forms.Select(attrs={'class': 'form-control'}),
             'student_id': forms.TextInput(attrs={'class': 'form-control'}),
-            'course': forms.TextInput(attrs={'class': 'form-control'}),
-            'year_of_study': forms.Select(attrs={'class': 'form-control'}),
-            'campus': forms.TextInput(attrs={'class': 'form-control'}),
+            'phone_number': forms.TextInput(attrs={'class': 'form-control'}),
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Make some fields required or optional as needed
+        self.fields['student_id'].required = False
+        self.fields['phone_number'].required = False
