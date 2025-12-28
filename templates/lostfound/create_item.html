@@ -1,0 +1,432 @@
+{% extends 'base.html' %} {% load static %} {% block title %}Report Lost/Found
+Item - Campus Marketplace{% endblock %} {% block extra_css %}
+<style>
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+
+  .required label::after {
+    content: " *";
+    color: #dc3545;
+  }
+
+  #date-lost-input {
+    padding-right: 40px;
+  }
+
+  .form-text {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+          <h4 class="mb-0">
+            <i class="fas fa-search me-2"></i> Report Lost/Found Item
+          </h4>
+        </div>
+        <div class="card-body">
+          <!-- Display form errors at the top -->
+          {% if form.errors %}
+          <div class="alert alert-danger">
+            <h5>
+              <i class="fas fa-exclamation-triangle me-2"></i> Please correct
+              the following errors:
+            </h5>
+            <ul class="mb-0">
+              {% for field, errors in form.errors.items %} {% for error in
+              errors %}
+              <li>{{ field|title }}: {{ error }}</li>
+              {% endfor %} {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+
+          <form
+            method="POST"
+            enctype="multipart/form-data"
+            id="lostfound-form"
+            novalidate
+          >
+            {% csrf_token %}
+
+            <!-- Hidden field for user -->
+            <input type="hidden" name="user" value="{{ request.user.id }}" />
+
+            <!-- Category Field -->
+            <div class="form-group required">
+              <label for="{{ form.category.id_for_label }}" class="form-label"
+                >Item Category</label
+              >
+              {{ form.category }} {% if form.category.errors %}
+              <div class="invalid-feedback d-block">
+                {{ form.category.errors.0 }}
+              </div>
+              {% endif %}
+            </div>
+
+            <!-- Item Name Field -->
+            <div class="form-group required">
+              <label for="{{ form.item_name.id_for_label }}" class="form-label"
+                >Item Name</label
+              >
+              {{ form.item_name }} {% if form.item_name.errors %}
+              <div class="invalid-feedback d-block">
+                {{ form.item_name.errors.0 }}
+              </div>
+              {% endif %}
+            </div>
+
+            <!-- Description Field -->
+            <div class="form-group required">
+              <label
+                for="{{ form.description.id_for_label }}"
+                class="form-label"
+                >Description</label
+              >
+              {{ form.description }} {% if form.description.errors %}
+              <div class="invalid-feedback d-block">
+                {{ form.description.errors.0 }}
+              </div>
+              {% endif %}
+              <div class="form-text">
+                Describe the item (color, brand, distinguishing features, etc.)
+              </div>
+            </div>
+
+            <!-- Location Field -->
+            <div class="form-group required">
+              <label for="{{ form.location.id_for_label }}" class="form-label"
+                >Location</label
+              >
+              <div class="input-group">
+                <span class="input-group-text">
+                  <i class="fas fa-map-marker-alt"></i>
+                </span>
+                {{ form.location }}
+              </div>
+              {% if form.location.errors %}
+              <div class="invalid-feedback d-block">
+                {{ form.location.errors.0 }}
+              </div>
+              {% endif %}
+              <div class="form-text">Where was it lost/found?</div>
+            </div>
+
+            <!-- Contact Info Field -->
+            <div class="form-group required">
+              <label
+                for="{{ form.contact_info.id_for_label }}"
+                class="form-label"
+                >Contact Information</label
+              >
+              <div class="input-group">
+                <span class="input-group-text">
+                  <i class="fas fa-address-card"></i>
+                </span>
+                {{ form.contact_info }}
+              </div>
+              {% if form.contact_info.errors %}
+              <div class="invalid-feedback d-block">
+                {{ form.contact_info.errors.0 }}
+              </div>
+              {% endif %}
+              <div class="form-text">
+                Your contact information (phone, email, etc.)
+              </div>
+            </div>
+
+            <!-- Date Lost Field -->
+            <div class="form-group required">
+              <label for="date-lost-input" class="form-label"
+                >Date Lost/Found</label
+              >
+              <div class="date-input-group">
+                <input
+                  type="text"
+                  name="date_lost"
+                  id="date-lost-input"
+                  class="form-control {% if form.date_lost.errors %}is-invalid{% endif %}"
+                  placeholder="dd/mm/yyyy"
+                  autocomplete="off"
+                  value="{{ form.date_lost.value|default:'' }}"
+                  required
+                />
+                <button
+                  type="button"
+                  class="calendar-btn"
+                  id="calendar-trigger"
+                  title="Open calendar"
+                >
+                  <i class="fas fa-calendar-alt"></i>
+                </button>
+                {% if form.date_lost.errors %}
+                <div class="invalid-feedback d-block">
+                  {{ form.date_lost.errors.0 }}
+                </div>
+                {% endif %}
+              </div>
+              <div class="form-text">
+                Select a date between one year ago and today
+              </div>
+            </div>
+
+            <!-- Status Field -->
+            <div class="form-group required">
+              <label for="{{ form.status.id_for_label }}" class="form-label"
+                >Status</label
+              >
+              {{ form.status }} {% if form.status.errors %}
+              <div class="invalid-feedback d-block">
+                {{ form.status.errors.0 }}
+              </div>
+              {% endif %}
+              <div class="form-text">Is this item lost or found?</div>
+            </div>
+
+            <!-- Image Field -->
+            <div class="form-group">
+              <label for="{{ form.image.id_for_label }}" class="form-label"
+                >Item Image (Optional)</label
+              >
+              {{ form.image }} {% if form.image.errors %}
+              <div class="invalid-feedback d-block">
+                {{ form.image.errors.0 }}
+              </div>
+              {% endif %}
+              <div class="form-text">Upload a clear picture of the item</div>
+            </div>
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+              <a
+                href="{% url 'lostfound:home' %}"
+                class="btn btn-secondary me-md-2"
+              >
+                <i class="fas fa-times"></i> Cancel
+              </a>
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-paper-plane"></i> Submit Report
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Get today's date and date one year ago
+    const today = new Date();
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(today.getFullYear() - 1);
+
+    // Initialize flatpickr with dd/mm/yyyy format
+    const datePicker = flatpickr("#date-lost-input", {
+      dateFormat: "d/m/Y",
+      altFormat: "d/m/Y",
+      altInput: false,
+      locale: {
+        firstDayOfWeek: 1,
+        weekdays: {
+          shorthand: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+          longhand: [
+            "Sunday",
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+          ],
+        },
+        months: {
+          shorthand: [
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec",
+          ],
+          longhand: [
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December",
+          ],
+        },
+      },
+      maxDate: today,
+      minDate: oneYearAgo,
+      disableMobile: true, // Better mobile experience
+      clickOpens: true,
+      allowInput: true, // Allows manual input
+      onChange: function (selectedDates, dateStr, instance) {
+        // Validate on change
+        if (selectedDates[0]) {
+          const selectedDate = selectedDates[0];
+          if (selectedDate > today) {
+            alert("❌ Date cannot be in the future!");
+            instance.clear();
+          } else if (selectedDate < oneYearAgo) {
+            alert("❌ Date cannot be more than one year in the past!");
+            instance.clear();
+          }
+        }
+      },
+      onReady: function (selectedDates, dateStr, instance) {
+        // Add custom classes
+        instance.calendarContainer.classList.add("shadow", "border-0");
+      },
+    });
+
+    // Trigger calendar when icon is clicked
+    document
+      .getElementById("calendar-trigger")
+      .addEventListener("click", function () {
+        datePicker.open();
+      });
+
+    // Add click handler to input field
+    document
+      .getElementById("date-lost-input")
+      .addEventListener("click", function () {
+        datePicker.open();
+      });
+
+    // Form validation for date input
+    document
+      .getElementById("lostfound-form")
+      .addEventListener("submit", function (e) {
+        const dateInput = document.getElementById("date-lost-input");
+        const dateValue = dateInput.value.trim();
+
+        if (!dateValue) {
+          e.preventDefault();
+          alert("⚠️ Please enter the date");
+          dateInput.focus();
+          return;
+        }
+
+        if (dateValue) {
+          // Validate date format dd/mm/yyyy
+          const dateRegex = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
+          const match = dateValue.match(dateRegex);
+
+          if (!match) {
+            e.preventDefault();
+            alert(
+              "❌ Please enter date in dd/mm/yyyy format (e.g., 01/02/2024)"
+            );
+            dateInput.focus();
+            return;
+          }
+
+          const day = parseInt(match[1], 10);
+          const month = parseInt(match[2], 10);
+          const year = parseInt(match[3], 10);
+
+          // Check if valid date
+          const date = new Date(year, month - 1, day);
+          if (
+            date.getDate() !== day ||
+            date.getMonth() + 1 !== month ||
+            date.getFullYear() !== year
+          ) {
+            e.preventDefault();
+            alert("❌ Please enter a valid date");
+            dateInput.focus();
+            return;
+          }
+
+          // Check date range
+          if (date > today) {
+            e.preventDefault();
+            alert("❌ Date cannot be in the future!");
+            dateInput.focus();
+            return;
+          }
+
+          if (date < oneYearAgo) {
+            e.preventDefault();
+            alert("❌ Date cannot be more than one year in the past!");
+            dateInput.focus();
+            return;
+          }
+        }
+      });
+
+    // Format date on blur (add leading zeros if needed)
+    document
+      .getElementById("date-lost-input")
+      .addEventListener("blur", function (e) {
+        let value = e.target.value.trim();
+        if (value) {
+          const parts = value.split("/");
+          if (parts.length === 3) {
+            // Add leading zeros
+            parts[0] = parts[0].padStart(2, "0");
+            parts[1] = parts[1].padStart(2, "0");
+            // Ensure year is 4 digits
+            if (parts[2].length === 2) {
+              parts[2] = "20" + parts[2];
+            }
+            e.target.value = parts.join("/");
+          }
+        }
+      });
+
+    // Make form fields display validation on submit
+    const form = document.getElementById("lostfound-form");
+    const formFields = form.querySelectorAll("input, textarea, select");
+
+    form.addEventListener("submit", function (event) {
+      let isValid = true;
+
+      formFields.forEach(function (field) {
+        if (field.hasAttribute("required") && !field.value.trim()) {
+          field.classList.add("is-invalid");
+          isValid = false;
+        } else {
+          field.classList.remove("is-invalid");
+        }
+      });
+
+      if (!isValid) {
+        event.preventDefault();
+        alert("⚠️ Please fill in all required fields");
+      }
+    });
+
+    // Remove invalid class when user starts typing
+    formFields.forEach(function (field) {
+      field.addEventListener("input", function () {
+        if (this.value.trim()) {
+          this.classList.remove("is-invalid");
+        }
+      });
+    });
+  });
+</script>
+{% endblock %}

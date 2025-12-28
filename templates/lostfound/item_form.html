@@ -16,7 +16,7 @@
                     
                     <div class="row">
                         <div class="col-md-6">
-                            {{ form.item_type|as_crispy_field }}
+                            
                         </div>
                         <div class="col-md-6">
                             {{ form.status|as_crispy_field }}
@@ -62,3 +62,32 @@
     </div>
 </div>
 {% endblock %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get the date input field
+    const dateInput = document.querySelector('input[type="date"]');
+    
+    if (dateInput) {
+        // Set max to today
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.setAttribute('max', today);
+        
+        // Set min to one year ago
+        const oneYearAgo = new Date();
+        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+        const minDate = oneYearAgo.toISOString().split('T')[0];
+        dateInput.setAttribute('min', minDate);
+        
+        // Add change event listener
+        dateInput.addEventListener('change', function() {
+            const selectedDate = new Date(this.value);
+            const todayObj = new Date();
+            
+            if (selectedDate > todayObj) {
+                alert('Date cannot be in the future. Please select a valid date.');
+                this.value = today;
+            }
+        });
+    }
+});
+</script>

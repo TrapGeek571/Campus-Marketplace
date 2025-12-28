@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Report Lost/Found Item</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css"
+    />
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <!-- Flatpickr CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+    />
+
+    <style>
+      body {
+        background-color: #f8f9fa;
+        padding-top: 20px;
+      }
+      .container {
+        max-width: 800px;
+      }
+      .date-input-group {
+        position: relative;
+      }
+      .calendar-btn {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #6c757d;
+        z-index: 10;
+      }
+      #date-lost-input {
+        padding-right: 40px;
+      }
+      .alert-message {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+              <h4 class="mb-0">
+                <i class="fas fa-search me-2"></i> Report Lost/Found Item
+              </h4>
+            </div>
+            <div class="card-body">
+              {% if messages %}
+              <div class="alert-message">
+                {% for message in messages %}
+                <div
+                  class="alert alert-{{ message.tags }} alert-dismissible fade show"
+                  role="alert"
+                >
+                  {{ message }}
+                  <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                    aria-label="Close"
+                  ></button>
+                </div>
+                {% endfor %}
+              </div>
+              {% endif %} {% if form.errors %}
+              <div class="alert alert-danger">
+                <h5>
+                  <i class="fas fa-exclamation-triangle me-2"></i> Form Errors:
+                </h5>
+                <ul class="mb-0">
+                  {% for field, errors in form.errors.items %} {% for error in
+                  errors %}
+                  <li><strong>{{ field|title }}:</strong> {{ error }}</li>
+                  {% endfor %} {% endfor %}
+                </ul>
+              </div>
+              {% endif %}
+
+              <form
+                method="POST"
+                enctype="multipart/form-data"
+                id="lostfound-form"
+              >
+                {% csrf_token %}
+
+                <!-- Category -->
+                <div class="mb-3">
+                  <label for="id_category" class="form-label">Category *</label>
+                  <select
+                    name="category"
+                    class="form-select"
+                    id="id_category"
+                    required
+                  >
+                    <option value="">Select category</option>
+                    <option value="electronics">Electronics</option>
+                    <option value="books">Books</option>
+                    <option value="keys">Keys</option>
+                    <option value="wallet">Wallet/Purse</option>
+                    <option value="clothing">Clothing</option>
+                    <option value="accessories">Accessories</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+
+                <!-- Item Name -->
+                <div class="mb-3">
+                  <label for="id_item_name" class="form-label"
+                    >Item Name *</label
+                  >
+                  <input
+                    type="text"
+                    name="item_name"
+                    class="form-control"
+                    id="id_item_name"
+                    placeholder="e.g., iPhone 12, Calculus Textbook"
+                    required
+                  />
+                </div>
+
+                <!-- Description -->
+                <div class="mb-3">
+                  <label for="id_description" class="form-label"
+                    >Description *</label
+                  >
+                  <textarea
+                    name="description"
+                    class="form-control"
+                    id="id_description"
+                    rows="4"
+                    placeholder="Describe the item..."
+                    required
+                  ></textarea>
+                </div>
+
+                <!-- Location -->
+                <div class="mb-3">
+                  <label for="id_location" class="form-label">Location *</label>
+                  <input
+                    type="text"
+                    name="location"
+                    class="form-control"
+                    id="id_location"
+                    placeholder="Where was it lost/found?"
+                    required
+                  />
+                </div>
+
+                <!-- Contact Info -->
+                <div class="mb-3">
+                  <label for="id_contact_info" class="form-label"
+                    >Contact Information *</label
+                  >
+                  <textarea
+                    name="contact_info"
+                    class="form-control"
+                    id="id_contact_info"
+                    rows="2"
+                    placeholder="Your phone, email, etc."
+                    required
+                  ></textarea>
+                </div>
+
+                <!-- Date Lost -->
+                <div class="mb-3">
+                  <label for="date-lost-input" class="form-label"
+                    >Date Lost/Found *</label
+                  >
+                  <div class="date-input-group">
+                    <input
+                      type="text"
+                      name="date_lost"
+                      id="date-lost-input"
+                      class="form-control"
+                      placeholder="dd/mm/yyyy"
+                      required
+                    />
+                    <button
+                      type="button"
+                      class="calendar-btn"
+                      id="calendar-trigger"
+                    >
+                      <i class="fas fa-calendar-alt"></i>
+                    </button>
+                  </div>
+                  <div class="form-text text-muted">
+                    Select a date between one year ago and today
+                  </div>
+                </div>
+
+                <!-- Status -->
+                <div class="mb-3">
+                  <label for="id_status" class="form-label">Status *</label>
+                  <select
+                    name="status"
+                    class="form-select"
+                    id="id_status"
+                    required
+                  >
+                    <option value="lost">Lost</option>
+                    <option value="found">Found</option>
+                    <option value="returned">Returned</option>
+                  </select>
+                </div>
+
+                <!-- Image -->
+                <div class="mb-4">
+                  <label for="id_image" class="form-label"
+                    >Item Image (Optional)</label
+                  >
+                  <input
+                    type="file"
+                    name="image"
+                    class="form-control"
+                    id="id_image"
+                    accept="image/*"
+                  />
+                </div>
+
+                <div class="d-flex justify-content-end">
+                  <a
+                    href="{% url 'lostfound:home' %}"
+                    class="btn btn-secondary me-2"
+                  >
+                    Cancel
+                  </a>
+                  <button type="submit" class="btn btn-primary">
+                    Report Item
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label for="date-lost-input" class="form-label">Date Lost/Found *</label>
+      <div class="input-group date" id="datepicker">
+        <input
+          type="text"
+          class="form-control"
+          id="date-lost-input"
+          name="date_lost"
+          required
+        />
+        <span class="input-group-text">
+          <i class="fas fa-calendar-alt"></i>
+        </span>
+      </div>
+    </div>
+
+    <!-- Add before closing body -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
+    <script>
+      $(document).ready(function () {
+        $("#datepicker").datepicker({
+          format: "dd/mm/yyyy",
+          autoclose: true,
+          todayHighlight: true,
+          endDate: "0d",
+          startDate: "-365d",
+        });
+      });
+    </script>
+  </body>
+</html>

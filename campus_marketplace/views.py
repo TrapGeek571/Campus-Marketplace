@@ -1,6 +1,6 @@
 from django.http import HttpResponseForbidden
 from marketplace.models import Product
-from lostfound.models import LostItem
+from lostfound.models import LostFoundItem
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from .models import Item

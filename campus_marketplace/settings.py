@@ -1,11 +1,13 @@
-# campus_marketplace/settings.py
 import os
+import sys
 from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+sys.path.insert(0, os.path.join(BASE_DIR, 'apps'))
 
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-default-key-for-dev')
 
@@ -14,6 +16,7 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
+    'accounts',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -28,7 +31,7 @@ INSTALLED_APPS = [
     'crispy_bootstrap5',
     
     # Local apps
-    'accounts',
+    
     'marketplace',
     'lostfound',
     'housing',
@@ -119,3 +122,8 @@ LOGIN_URL = 'accounts:login'
 LOGOUT_REDIRECT_URL = 'home'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# Django Admin Customization
+ADMIN_SITE_HEADER = "Campus Marketplace Administration"
+ADMIN_SITE_TITLE = "Campus Marketplace Admin"
+ADMIN_INDEX_TITLE = "Welcome to Campus Marketplace Admin"
+

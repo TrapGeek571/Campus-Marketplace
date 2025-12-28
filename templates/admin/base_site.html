@@ -1,0 +1,100 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+:root {
+    --primary: #4e73df;
+    --success: #1cc88a;
+    --info: #36b9cc;
+    --warning: #f6c23e;
+    --danger: #e74a3b;
+}
+
+#header {
+    background: linear-gradient(135deg, var(--primary) 0%, #2e59d9 100%) !important;
+}
+
+.module h2, .module caption, .inline-group h2 {
+    background: linear-gradient(135deg, var(--info) 0%, #258391 100%) !important;
+}
+
+.button, input[type=submit], input[type=button], .submit-row input, a.button {
+    background: var(--primary) !important;
+    border-radius: 4px !important;
+    border: none !important;
+}
+
+.button:hover, input[type=submit]:hover, input[type=button]:hover {
+    background: #2e59d9 !important;
+}
+
+.badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 12px;
+    color: white !important;
+}
+
+.bg-success { background-color: var(--success) !important; }
+.bg-warning { background-color: var(--warning) !important; }
+.bg-danger { background-color: var(--danger) !important; }
+.bg-info { background-color: var(--info) !important; }
+.bg-primary { background-color: var(--primary) !important; }
+
+/* Card styling for admin */
+.card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.card-header {
+    background: linear-gradient(135deg, var(--primary) 0%, #2e59d9 100%);
+    color: white;
+    padding: 15px;
+    font-weight: bold;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+/* Table improvements */
+thead {
+    background: #f8f9fa !important;
+}
+
+th {
+    font-weight: 600 !important;
+    color: var(--dark) !important;
+}
+
+/* Image preview styling */
+.img-preview {
+    border-radius: 4px;
+    border: 2px solid #dee2e6;
+    transition: transform 0.3s;
+}
+
+.img-preview:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+</style>
+{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">
+    <a href="{% url 'admin:index' %}">
+        🏫 Campus Marketplace Admin
+    </a>
+</h1>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}

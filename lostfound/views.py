@@ -4,19 +4,22 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.urls import reverse
 from django.db.models import Q
-from .models import LostItem
-from .forms import LostItemForm
+from .models import LostFoundItem
+from .forms import LostFoundItemForm
+import logging
+
+logger = logging.getLogger(__name__)
 
 @login_required
 def lost_found_home(request):
-    lost_items = LostItem.objects.filter(status='lost').order_by('-created_at')
-    found_items = LostItem.objects.filter(status='found').order_by('-created_at')
+    lost_items = LostFoundItem.objects.filter(status='lost').order_by('-created_at')
+    found_items = LostFoundItem.objects.filter(status='found').order_by('-created_at')
     
-    # Filter by item type
-    item_type = request.GET.get('type')
-    if item_type:
-        lost_items = lost_items.filter(item_type=item_type)
-        found_items = found_items.filter(item_type=item_type)
+    # Filter by category (CHANGED from item_type to category)
+    category = request.GET.get('category')
+    if category:
+        lost_items = lost_items.filter(category=category)
+        found_items = found_items.filter(category=category)
     
     # Search functionality
     search_query = request.GET.get('search')
@@ -37,17 +40,17 @@ def lost_found_home(request):
         'found_items': found_items,
         'title': 'Lost & Found',
         'search_query': search_query or '',
-        'selected_type': item_type,
+        'selected_category': category,
     }
     return render(request, 'lostfound/home.html', context)
 
 @login_required
 def item_detail(request, pk):
-    item = get_object_or_404(LostItem, pk=pk)
+    item = get_object_or_404(LostFoundItem, pk=pk)
     
-    # Get similar items (same type)
-    similar_items = LostItem.objects.filter(
-        item_type=item.item_type,
+    # Get similar items (same category)
+    similar_items = LostFoundItem.objects.filter(
+        category=item.category,
         status=item.status
     ).exclude(pk=item.pk).order_by('-created_at')[:3]
     
@@ -61,7 +64,7 @@ def item_detail(request, pk):
 @login_required
 def report_item(request):
     if request.method == 'POST':
-        form = LostItemForm(request.POST, request.FILES)
+        form = LostFoundItemForm(request.POST, request.FILES)
         if form.is_valid():
             item = form.save(commit=False)
             item.user = request.user
@@ -71,7 +74,7 @@ def report_item(request):
         else:
             messages.error(request, 'Please correct the errors below.')
     else:
-        form = LostItemForm()
+        form = LostFoundItemForm()
     
     return render(request, 'lostfound/item_form.html', {
         'form': form,
@@ -79,10 +82,53 @@ def report_item(request):
         'submit_text': 'Report Item',
         'cancel_url': reverse('lostfound:home')
     })
+    
+@login_required
+def create_item(request):
+    if request.method == 'POST':
+        # Get form data
+        data = request.POST.copy()
+        files = request.FILES
+        
+        # Create item manually to debug
+        try:
+            item = LostFoundItem(
+                user=request.user,
+                category=data.get('category'),
+                item_name=data.get('item_name'),
+                description=data.get('description'),
+                location=data.get('location'),
+                contact_info=data.get('contact_info'),
+                status=data.get('status'),
+            )
+            
+            # Parse date from dd/mm/yyyy to Python date
+            date_str = data.get('date_lost', '')
+            if date_str:
+                from datetime import datetime
+                date_obj = datetime.strptime(date_str, '%d/%m/%Y').date()
+                item.date_lost = date_obj
+            
+            # Handle image
+            if 'image' in files:
+                item.image = files['image']
+            
+            # Validate and save
+            item.full_clean()  # This will validate all fields
+            item.save()
+            
+            messages.success(request, 'Item reported successfully!')
+            return redirect('lostfound:home')
+            
+        except Exception as e:
+            messages.error(request, f'Error: {str(e)}')
+            print(f"Error creating item: {e}")
+    
+    return render(request, 'lostfound/simple_create.html')
 
 @login_required
 def update_item(request, pk):
-    item = get_object_or_404(LostItem, pk=pk)
+    item = get_object_or_404(LostFoundItem, pk=pk)
     
     # Check ownership
     if item.user != request.user:
@@ -90,7 +136,7 @@ def update_item(request, pk):
         return redirect('lostfound:item_detail', pk=item.pk)
     
     if request.method == 'POST':
-        form = LostItemForm(request.POST, request.FILES, instance=item)
+        form = LostFoundItemForm(request.POST, request.FILES, instance=item)
         if form.is_valid():
             form.save()
             messages.success(request, 'Item updated successfully!')
@@ -98,7 +144,7 @@ def update_item(request, pk):
         else:
             messages.error(request, 'Please correct the errors below.')
     else:
-        form = LostItemForm(instance=item)
+        form = LostFoundItemForm(instance=item)
     
     return render(request, 'lostfound/item_form.html', {
         'form': form,
@@ -109,7 +155,7 @@ def update_item(request, pk):
 
 @login_required
 def delete_item(request, pk):
-    item = get_object_or_404(LostItem, pk=pk)
+    item = get_object_or_404(LostFoundItem, pk=pk)
     
     # Check ownership
     if item.user != request.user:
@@ -128,7 +174,7 @@ def delete_item(request, pk):
 
 @login_required
 def my_reports(request):
-    items = LostItem.objects.filter(user=request.user).order_by('-created_at')
+    items = LostFoundItem.objects.filter(user=request.user).order_by('-created_at')
     
     # Filter by status
     status_filter = request.GET.get('status')
@@ -144,7 +190,7 @@ def my_reports(request):
 
 @login_required
 def update_status(request, pk, new_status):
-    item = get_object_or_404(LostItem, pk=pk)
+    item = get_object_or_404(LostFoundItem, pk=pk)
     
     # Check ownership
     if item.user != request.user:

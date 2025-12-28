@@ -1,8 +1,17 @@
 # marketplace/forms.py
 from django import forms
 from .models import Product, Category
+from datetime import date, timedelta
 
 class ProductForm(forms.ModelForm):
+    def clean_created_at(self):
+        created_at = self.cleaned_data.get('created_at')
+        if created_at:
+            today = date.today()
+            if created_at > today:
+                raise forms.ValidationError("Date cannot be in the future.")
+        return created_at
+    
     class Meta:
         model = Product
         fields = ['title', 'description', 'category', 'price', 'condition', 'image']

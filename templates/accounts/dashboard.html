@@ -36,7 +36,7 @@
                     </a>
                     <a href="{% url 'lostfound:my_reports' %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
                         <span><i class="bi bi-search text-warning me-2"></i> My Reports</span>
-                        <span class="badge bg-warning rounded-pill">{{ lostitem_count }}</span>
+                        <span class="badge bg-warning rounded-pill">{{ lostfounditem_count }}</span>
                     </a>
                     <a href="{% url 'housing:my_properties' %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
                         <span><i class="bi bi-house text-success me-2"></i> My Properties</span>
@@ -66,7 +66,7 @@
                     <div class="text-end">
                         <p class="mb-1">Campus Marketplace Score</p>
                         <div class="display-6 text-primary">
-                            {{ product_count|add:lostitem_count|add:property_count|add:restaurant_count }}
+                            {{ product_count|add:lostfounditem_count|add:property_count|add:restaurant_count }}
                         </div>
                     </div>
                 </div>
@@ -123,7 +123,7 @@
                 <h5 class="mb-0">Recent Activity</h5>
             </div>
             <div class="card-body">
-                {% if product_count == 0 and lostitem_count == 0 and property_count == 0 and restaurant_count == 0 %}
+                {% if product_count == 0 and lostfounditem_count == 0 and property_count == 0 and restaurant_count == 0 %}
                 <div class="text-center py-4">
                     <i class="bi bi-inbox display-4 text-muted mb-3"></i>
                     <h5>No Activity Yet</h5>
@@ -146,13 +146,13 @@
                     </a>
                     {% endif %}
                     
-                    {% if lostitem_count > 0 %}
+                    {% if lostfounditem_count > 0 %}
                     <a href="{% url 'lostfound:my_reports' %}" class="list-group-item list-group-item-action">
                         <div class="d-flex w-100 justify-content-between">
                             <h6 class="mb-1"><i class="bi bi-search text-warning me-2"></i>Your Lost & Found Reports</h6>
-                            <span class="badge bg-warning rounded-pill">{{ lostitem_count }}</span>
+                            <span class="badge bg-warning rounded-pill">{{ lostfounditem_count }}</span>
                         </div>
-                        <p class="mb-1">You have {{ lostitem_count }} report{{ lostitem_count|pluralize }}</p>
+                        <p class="mb-1">You have {{ lostfounditem_count }} report{{ lostfounditem_count|pluralize }}</p>
                         <small class="text-muted">Click to view your reports</small>
                     </a>
                     {% endif %}

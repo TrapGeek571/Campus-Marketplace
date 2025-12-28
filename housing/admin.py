@@ -1,31 +1,31 @@
 from django.contrib import admin
+from django.utils.html import format_html
 from .models import Property
 
-@admin.register(Property)
 class PropertyAdmin(admin.ModelAdmin):
-    list_display = ('title', 'property_type', 'rent', 'bedrooms', 'is_furnished', 'is_available', 'owner', 'available_from')
-    list_filter = ('property_type', 'is_furnished', 'is_available', 'created_at')
-    search_fields = ('title', 'description', 'address', 'owner__username')
-    list_editable = ('is_available', 'rent') # Useful for quick updates
-    readonly_fields = ('created_at', 'owner')
-    fieldsets = (
-        ('Basic Info', {
-            'fields': ('owner', 'title', 'description', 'property_type')
-        }),
-        ('Location & Price', {
-            'fields': ('address', 'rent')
-        }),
-        ('Specifications', {
-            'fields': ('bedrooms', 'bathrooms', 'is_furnished', 'image')
-        }),
-        ('Availability', {
-            'fields': ('is_available', 'available_from', 'contact_info')
-        }),
-    )
+    list_display = [
+        'title', 
+        'owner', 
+        'property_type', 
+        'rent', 
+        'is_available_display', 
+        'created_at'
+    ]
 
-    # Auto-set the owner in admin
-    def save_model(self, request, obj, form, change):
-        if not obj.owner_id:
-            obj.owner = request.user
-        super().save_model(request, obj, form, change)
+    list_filter = [
+        'property_type', 
+        'is_available', 
+        'is_furnished'
+    ]
 
+    search_fields = [
+        'title', 
+        'description', 
+        'address'
+    ]
+    def is_available_display(self, obj):
+        if obj.is_available:
+            return format_html('<span style="color: green;">✓ Available</span>')
+        return format_html('<span style="color: red;">✗ Rented</span>')
+    is_available_display.short_description = 'Status'
+admin.site.register(Property, PropertyAdmin)
