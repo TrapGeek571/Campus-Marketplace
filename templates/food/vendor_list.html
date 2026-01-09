@@ -1,0 +1,176 @@
+{% extends 'food/base.html' %}
+
+{% block title %}Restaurants - Campus Food Marketplace{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="mb-0">Restaurants & Food Vendors</h1>
+            <p class="lead text-muted">Discover amazing food around your campus</p>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'food:add_vendor' %}" class="btn btn-food">
+                <i class="bi bi-plus-circle"></i> Add Restaurant
+            </a>
+        </div>
+    </div>
+
+    <!-- Search and Filter Card -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <label for="id_search" class="form-label">Search</label>
+                    {{ search_form.search }}
+                </div>
+                <div class="col-md-3">
+                    <label for="id_cuisine_type" class="form-label">Cuisine</label>
+                    {{ search_form.cuisine_type }}
+                </div>
+                <div class="col-md-3">
+                    <label for="id_vendor_type" class="form-label">Vendor Type</label>
+                    {{ search_form.vendor_type }}
+                </div>
+                <div class="col-md-2">
+                    <label for="id_delivery_available" class="form-label">Delivery</label>
+                    {{ search_form.delivery_available }}
+                </div>
+                <div class="col-md-4">
+                    <label for="id_city" class="form-label">City</label>
+                    {{ search_form.city }}
+                </div>
+                <div class="col-md-3">
+                    <label for="id_sort_by" class="form-label">Sort By</label>
+                    {{ search_form.sort_by }}
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-food w-100">
+                        <i class="bi bi-search"></i> Search
+                    </button>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <a href="{% url 'food:vendor_list' %}" class="btn btn-outline-secondary w-100">
+                        Clear
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Results Count -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <p class="mb-0">Found <strong>{{ page_obj.paginator.count }}</strong> restaurants</p>
+        <div class="btn-group" role="group">
+            <a href="?sort_by=newest" class="btn btn-outline-secondary btn-sm">Newest</a>
+            <a href="?sort_by=rating" class="btn btn-outline-secondary btn-sm">Top Rated</a>
+            <a href="?sort_by=popular" class="btn btn-outline-secondary btn-sm">Most Popular</a>
+        </div>
+    </div>
+
+    <!-- Restaurants Grid -->
+    <div class="row">
+        {% for vendor in vendors %}
+        <div class="col-md-4 mb-4">
+            <div class="card food-card h-100">
+                {% if vendor.main_image %}
+                <img src="{{ vendor.main_image.url }}" class="card-img-top" alt="{{ vendor.name }}" 
+                     style="height: 200px; object-fit: cover;">
+                {% else %}
+                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
+                     style="height: 200px;">
+                    <i class="bi bi-shop" style="font-size: 3rem; color: #ccc;"></i>
+                </div>
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ vendor.name|truncatechars:30 }}</h5>
+                    <p class="card-text">
+                        <span class="cuisine-tag">{{ vendor.get_cuisine_type_display }}</span>
+                        <span class="cuisine-tag">{{ vendor.get_vendor_type_display }}</span>
+                    </p>
+                    <p class="card-text">
+                        <i class="bi bi-geo-alt text-danger"></i> {{ vendor.neighborhood|default:vendor.city }}
+                    </p>
+                    <p class="card-text">
+                        <i class="bi bi-clock text-info"></i> {{ vendor.opening_time|time:"g:i A" }} - {{ vendor.closing_time|time:"g:i A" }}
+                    </p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            {% if vendor.delivery_available %}
+                            <span class="badge bg-success">Delivery</span>
+                            {% endif %}
+                            {% if vendor.dine_in_available %}
+                            <span class="badge bg-primary">Dine-in</span>
+                            {% endif %}
+                            {% if vendor.wifi_available %}
+                            <span class="badge bg-info">WiFi</span>
+                            {% endif %}
+                        </div>
+                        <div class="rating-stars">
+                            <!-- We'll add dynamic ratings later -->
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-half"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-white">
+                    <a href="{% url 'food:vendor_detail' vendor.pk %}" class="btn btn-outline-food w-100">
+                        View Restaurant
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                No restaurants found matching your criteria. 
+                <a href="{% url 'food:add_vendor' %}">Be the first to list a restaurant!</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.paginator.num_pages > 1 %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                    First
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                    Previous
+                </a>
+            </li>
+            {% endif %}
+
+            <li class="page-item active">
+                <span class="page-link">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+            </li>
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                    Next
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                    Last
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}@

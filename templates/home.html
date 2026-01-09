@@ -194,7 +194,7 @@
                         <div class="card">
                             <div class="card-body">
                                 <h6>Lost an item?</h6>
-                                <a href="{% url 'lostfound:report_item' %}" class="btn btn-outline-warning btn-sm">Report Now</a>
+                                <a href="{% url 'lostfound:create_item' %}" class="btn btn-outline-warning btn-sm">Report Now</a>
                             </div>
                         </div>
                     </div>
@@ -214,11 +214,11 @@
                         <i class="bi bi-bag me-2"></i> My Products
                         <span class="badge bg-primary float-end">0</span>
                     </a>
-                    <a href="{% url 'lostfound:my_reports' %}" class="list-group-item list-group-item-action">
+                    <a href="{% url 'lostfound:my_items' %}" class="list-group-item list-group-item-action">
                         <i class="bi bi-megaphone me-2"></i> My Reports
                         <span class="badge bg-warning float-end">0</span>
                     </a>
-                    <a href="{% url 'housing:my_properties' %}" class="list-group-item list-group-item-action">
+                    <a href="{% url 'housing:my_listings' %}" class="list-group-item list-group-item-action">
                         <i class="bi bi-house-door me-2"></i> My Properties
                         <span class="badge bg-success float-end">0</span>
                     </a>

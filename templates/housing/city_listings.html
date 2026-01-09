@@ -1,0 +1,108 @@
+{% extends 'housing/base.html' %} {% block title %}Housing in {{ city }}{% endblock %}
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <!-- City Header -->
+    <div class="card mb-4">
+      <div class="card-body text-center">
+        <h1 class="mb-3"><i class="bi bi-city text-primary"></i> {{ city }}</h1>
+        <div class="row">
+          <div class="col-md-4">
+            <h3>{{ total_listings }}</h3>
+            <p class="text-muted">Total Listings</p>
+          </div>
+          <div class="col-md-4">
+            <h3>KSh {{ avg_price|floatformat:0 }}</h3>
+            <p class="text-muted">Average Price</p>
+          </div>
+          <div class="col-md-4">
+            <a
+              href="{% url 'housing:create_listing' %}"
+              class="btn btn-primary mt-3"
+            >
+              <i class="bi bi-plus"></i> Post in {{ city }}
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Back to Cities -->
+    <div class="mb-4">
+      <a href="{% url 'housing:cities' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Back to All Cities
+      </a>
+    </div>
+
+    <!-- Listings -->
+    {% if listings %}
+    <div class="row">
+      {% for listing in listings %}
+      <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card listing-card h-100">
+          <div class="card-img-top-container">
+            {% if listing.main_image %}
+            <img
+              src="{{ listing.main_image.url }}"
+              class="card-img-top"
+              alt="{{ listing.title }}"
+              style="height: 200px; object-fit: cover"
+            />
+            {% else %}
+            <div
+              class="bg-secondary d-flex align-items-center justify-content-center"
+              style="height: 200px"
+            >
+              <i class="bi bi-house-door fa-3x text-white"></i>
+            </div>
+            {% endif %}
+            <span
+              class="badge-type badge bg-{% if listing.listing_type == 'rental' %}primary{% elif listing.listing_type == 'sublet' %}info{% elif listing.listing_type == 'roommate' %}success{% else %}warning{% endif %}"
+            >
+              {{ listing.get_listing_type_display }}
+            </span>
+            <span class="price-badge">{{ listing.price_display }}</span>
+          </div>
+          <div class="card-body">
+            <h5 class="card-title">{{ listing.title|truncatechars:40 }}</h5>
+            <p class="card-text text-muted">
+              <i class="bi bi-geo-alt"></i>
+              {% if listing.neighborhood %}{{ listing.neighborhood }}{% else
+              %}{{ listing.city }}{% endif %}
+            </p>
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <span class="badge bg-light text-dark">
+                  <i class="bi bi-bed"></i> {{ listing.bedrooms }} bed
+                </span>
+                <span class="badge bg-light text-dark">
+                  <i class="bi bi-bath"></i> {{ listing.bathrooms }} bath
+                </span>
+              </div>
+              <a
+                href="{% url 'housing:listing_detail' listing.pk %}"
+                class="btn btn-sm btn-outline-primary"
+              >
+                View
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+      <i class="bi bi-house-door fa-4x text-muted mb-3"></i>
+      <h4>No listings in {{ city }} yet</h4>
+      <p class="text-muted">
+        Be the first to post a housing listing in this city!
+      </p>
+      <a href="{% url 'housing:create_listing' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Post First Listing
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

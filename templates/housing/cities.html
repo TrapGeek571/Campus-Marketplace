@@ -1,0 +1,44 @@
+{% extends 'housing/base.html' %}
+
+{% block title %}Browse Housing by City{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-geo-alt"></i> Browse Housing by City
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for city in cities %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="bi bi-city text-primary"></i> {{ city.city }}
+                                </h5>
+                                <p class="card-text">
+                                    <span class="badge bg-primary">{{ city.listing_count }} listings</span>
+                                </p>
+                                <a href="{% url 'housing:city_listings' city.city %}" class="btn btn-outline-success btn-sm">
+                                    View Listings
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12 text-center py-5">
+                        <i class="bi bi-map fa-4x text-muted mb-3"></i>
+                        <h4>No cities available</h4>
+                        <p class="text-muted">Check back later for housing listings in different cities.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

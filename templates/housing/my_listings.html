@@ -1,0 +1,127 @@
+{% extends 'housing/base.html' %}
+
+{% block title %}My Housing Listings{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="bi bi-list"></i> My Housing Listings
+                    </h4>
+                    <a href="{% url 'housing:create_listing' %}" class="btn btn-light">
+                        <i class="bi bi-plus"></i> New Listing
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Stats -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h3 class="mb-0">{{ total_listings }}</h3>
+                                <p class="text-muted mb-0">Total Listings</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h3 class="mb-0">{{ active_listings }}</h3>
+                                <p class="text-muted mb-0">Active Listings</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h3 class="mb-0">{{ total_views }}</h3>
+                                <p class="text-muted mb-0">Total Views</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Listings Table -->
+                {% if listings %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Listing</th>
+                                <th>Type</th>
+                                <th>Location</th>
+                                <th>Price</th>
+                                <th>Status</th>
+                                <th>Views</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for listing in listings %}
+                            <tr>
+                                <td>
+                                    <strong>{{ listing.title|truncatechars:30 }}</strong>
+                                    {% if listing.is_featured %}
+                                    <span class="badge bg-warning">Featured</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-{% if listing.listing_type == 'rental' %}primary{% elif listing.listing_type == 'sublet' %}info{% elif listing.listing_type == 'roommate' %}success{% else %}warning{% endif %}">
+                                        {{ listing.get_listing_type_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <small>{{ listing.city }}</small>
+                                </td>
+                                <td>
+                                    <strong>{{ listing.price_display }}</strong>
+                                </td>
+                                <td>
+                                    {% if listing.is_available %}
+                                    <span class="badge bg-success">Available</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Not Available</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ listing.views_count }}</td>
+                                <td>
+                                    <small>{{ listing.created_at|date:"M d, Y" }}</small>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'housing:listing_detail' listing.pk %}" class="btn btn-outline-primary">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="{% url 'housing:update_listing' listing.pk %}" class="btn btn-outline-warning">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a href="{% url 'housing:delete_listing' listing.pk %}" class="btn btn-outline-danger">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-house-door fa-4x text-muted mb-3"></i>
+                    <h4>No listings yet</h4>
+                    <p class="text-muted">You haven't created any housing listings yet.</p>
+                    <a href="{% url 'housing:create_listing' %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Create Your First Listing
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

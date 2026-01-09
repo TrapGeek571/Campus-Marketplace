@@ -13,11 +13,11 @@ admin.site.index_title = "Welcome to Campus Marketplace Admin"
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', TemplateView.as_view(template_name='home.html'), name='home'),
-    path('accounts/', include('accounts.urls')),
-    path('marketplace/', include('marketplace.urls')),
-    path('lostfound/', include('lostfound.urls')),
-    path('housing/', include('housing.urls')),
-    path('food/', include('food.urls')),
+    path('accounts/', include('accounts.urls', namespace='accounts')),
+    path('marketplace/', include('marketplace.urls', namespace='marketplace')),
+    path('lostfound/', include('lostfound.urls', namespace='lostfound')),
+    path('housing/', include('housing.urls', namespace='housing')),
+    path('food/', include('food.urls', namespace='food')),
     #path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
 ]
 

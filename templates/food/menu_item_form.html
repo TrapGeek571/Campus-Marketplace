@@ -1,0 +1,159 @@
+{% extends 'food/base.html' %}
+
+{% block title %}{{ title|default:"Add Menu Item" }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-food text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-{{ menu_item|yesno:'pencil,plus-circle' }}"></i> 
+                        {{ title|default:"Add Menu Item" }}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h5>Restaurant: {{ vendor.name }}</h5>
+                        <p class="text-muted">{{ vendor.get_cuisine_type_display }} • {{ vendor.city }}</p>
+                    </div>
+                    
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <h5 class="alert-heading">
+                            <i class="bi bi-exclamation-triangle"></i> Please correct these errors:
+                        </h5>
+                        <ul class="mb-0">
+                            {% for field in form %}
+                                {% if field.errors %}
+                                    <li><strong>{{ field.label }}:</strong> {{ field.errors.0 }}</li>
+                                {% endif %}
+                            {% endfor %}
+                            {% for error in form.non_field_errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    <form method="POST" enctype="multipart/form-data" id="menuItemForm">
+                        {% csrf_token %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="id_name" class="form-label required-field">Item Name</label>
+                                {{ form.name }}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="id_category" class="form-label required-field">Category</label>
+                                {{ form.category }}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_description" class="form-label">Description</label>
+                            {{ form.description }}
+                            <div class="form-text">Describe the item, ingredients, etc.</div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="id_price" class="form-label required-field">Price (KSh)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">KSh</span>
+                                    {{ form.price }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="id_image" class="form-label">Item Image</label>
+                                {{ form.image }}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    {{ form.is_available }}
+                                    <label class="form-check-label" for="id_is_available">
+                                        Available for Order
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    {{ form.is_popular }}
+                                    <label class="form-check-label" for="id_is_popular">
+                                        Mark as Popular Item
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Buttons -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'food:vendor_detail' vendor.pk %}" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                            
+                            <button type="submit" class="btn btn-food">
+                                <i class="bi bi-save"></i> {{ menu_item|yesno:"Update,Add" }} Menu Item
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .required-field::after {
+        content: " *";
+        color: #dc3545;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    const form = document.getElementById('menuItemForm');
+    const requiredFields = form.querySelectorAll('[required]');
+    
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        
+        requiredFields.forEach(function(field) {
+            if (!field.value.trim()) {
+                field.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                field.classList.remove('is-invalid');
+            }
+        });
+        
+        // Validate price
+        const priceField = document.getElementById('id_price');
+        if (priceField.value && parseFloat(priceField.value) <= 0) {
+            priceField.classList.add('is-invalid');
+            alert('Price must be greater than 0');
+            isValid = false;
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fill in all required fields correctly.');
+        }
+    });
+    
+    // Remove invalid class when user starts typing
+    requiredFields.forEach(function(field) {
+        field.addEventListener('input', function() {
+            if (this.value.trim()) {
+                this.classList.remove('is-invalid');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

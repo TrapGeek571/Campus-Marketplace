@@ -1,0 +1,528 @@
+{% extends 'food/base.html' %}
+
+{% block title %}{{ title|default:"Add Restaurant" }}{% endblock %}
+
+{% block extra_css %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""/>
+<style>
+    .form-section {
+        background: #f7f5f3;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .section-title {
+        color: #e67e22;
+        border-bottom: 2px solid #e67e22;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+    }
+    .required-field::after {
+        content: " *";
+        color: #dc3545;
+    }
+    /* Map styling */
+    #vendor-map {
+        height: 400px;
+        width: 100%;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        border: 1px solid #dee2e6;
+        z-index: 1;
+    }
+    .map-instructions {
+        background: #e9f7fe;
+        border-left: 4px solid #17a2b8;
+        padding: 10px 15px;
+        margin-bottom: 15px;
+        font-size: 0.9rem;
+    }
+    .map-coordinates {
+        background: #f8f9fa;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 0.9rem;
+        margin-top: 10px;
+    }
+    .map-controls {
+        margin-bottom: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-header bg-food text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-{{ vendor|yesno:'pencil,plus-circle' }}"></i> 
+                        {{ title|default:"Add Restaurant" }}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <h5 class="alert-heading">
+                            <i class="bi bi-exclamation-triangle"></i> Please correct these errors:
+                        </h5>
+                        <ul class="mb-0">
+                            {% for field in form %}
+                                {% if field.errors %}
+                                    <li><strong>{{ field.label }}:</strong> {{ field.errors.0 }}</li>
+                                {% endif %}
+                            {% endfor %}
+                            {% for error in form.non_field_errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    <form method="POST" enctype="multipart/form-data" id="vendorForm">
+                        {% csrf_token %}
+                        
+                        <!-- Section 1: Basic Information -->
+                        <div class="form-section">
+                            <h5 class="section-title">Basic Information</h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="id_vendor_type" class="form-label required-field">Vendor Type</label>
+                                    {{ form.vendor_type }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="id_cuisine_type" class="form-label required-field">Cuisine Type</label>
+                                    {{ form.cuisine_type }}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="id_name" class="form-label required-field">Restaurant Name</label>
+                                {{ form.name }}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="id_description" class="form-label required-field">Description</label>
+                                {{ form.description }}
+                                <div class="form-text">Describe your restaurant, menu highlights, ambiance, etc.</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Section 2: Location -->
+                        <div class="form-section">
+                            <h5 class="section-title">Location Details</h5>
+                            
+                            <div class="row">
+                                <div class="col-md-8 mb-3">
+                                    <label for="id_address" class="form-label required-field">Full Address</label>
+                                    {{ form.address }}
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="id_city" class="form-label required-field">City</label>
+                                    {{ form.city }}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="id_neighborhood" class="form-label">Neighborhood/Area</label>
+                                {{ form.neighborhood }}
+                                <div class="form-text">Optional: Specific area or neighborhood</div>
+                            </div>
+                            
+                            <!-- Map Integration -->
+                            <div class="mb-4">
+                                <label class="form-label">
+                                    <i class="bi bi-map text-primary me-1"></i> Restaurant Location on Map
+                                </label>
+                                <div class="map-instructions">
+                                    <i class="bi bi-info-circle"></i> 
+                                    Click on the map to set the exact location of your restaurant. 
+                                    This helps customers find your location easily.
+                                </div>
+                                
+                                <div id="vendor-map" class="mb-3"></div>
+                                
+                                <div class="map-coordinates">
+                                    <span id="coordinates-display">
+                                        {% if vendor.latitude and vendor.longitude %}
+                                        Location set: {{ vendor.latitude }}, {{ vendor.longitude }}
+                                        {% else %}
+                                        No location selected. Click on the map to set location.
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                
+                                <div class="map-controls mt-3">
+                                    <button type="button" id="locate-me" class="btn btn-sm btn-outline-info">
+                                        <i class="bi bi-geo-alt me-1"></i> Use My Location
+                                    </button>
+                                    <button type="button" id="search-address" class="btn btn-sm btn-outline-primary ms-2">
+                                        <i class="bi bi-search me-1"></i> Search Address
+                                    </button>
+                                    <button type="button" id="clear-marker" class="btn btn-sm btn-outline-danger ms-2">
+                                        <i class="bi bi-x-circle me-1"></i> Clear Marker
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Hidden latitude/longitude fields -->
+                        {{ form.latitude }}
+                        {{ form.longitude }}
+                        
+                        <!-- Section 3: Contact Information -->
+                        <div class="form-section">
+                            <h5 class="section-title">Contact Information</h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="id_phone" class="form-label required-field">Phone Number</label>
+                                    {{ form.phone }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="id_email" class="form-label">Email Address</label>
+                                    {{ form.email }}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="id_website" class="form-label">Website</label>
+                                {{ form.website }}
+                            </div>
+                        </div>
+                        
+                        <!-- Section 4: Operating Hours -->
+                        <div class="form-section">
+                            <h5 class="section-title">Operating Hours</h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="id_opening_time" class="form-label required-field">Opening Time</label>
+                                    {{ form.opening_time }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="id_closing_time" class="form-label required-field">Closing Time</label>
+                                    {{ form.closing_time }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Section 5: Features & Services -->
+                        <div class="form-section">
+                            <h5 class="section-title">Features & Services</h5>
+                            
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <div class="form-check">
+                                        {{ form.delivery_available }}
+                                        <label class="form-check-label" for="id_delivery_available">
+                                            Delivery Available
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="form-check">
+                                        {{ form.takeaway_available }}
+                                        <label class="form-check-label" for="id_takeaway_available">
+                                            Takeaway Available
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="form-check">
+                                        {{ form.dine_in_available }}
+                                        <label class="form-check-label" for="id_dine_in_available">
+                                            Dine-in Available
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-check">
+                                        {{ form.accepts_card }}
+                                        <label class="form-check-label" for="id_accepts_card">
+                                            Accepts Card Payments
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-check">
+                                        {{ form.wifi_available }}
+                                        <label class="form-check-label" for="id_wifi_available">
+                                            WiFi Available
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Section 6: Images -->
+                        <div class="form-section">
+                            <h5 class="section-title">Restaurant Images</h5>
+                            <p class="text-muted mb-3">Upload up to 3 images. First image will be the main display image.</p>
+                            
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="id_main_image" class="form-label">Main Image</label>
+                                    {{ form.main_image }}
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="id_image_2" class="form-label">Image 2 (Optional)</label>
+                                    {{ form.image_2 }}
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="id_image_3" class="form-label">Image 3 (Optional)</label>
+                                    {{ form.image_3 }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Buttons -->
+                        <div class="d-flex justify-content-between">
+                            {% if vendor %}
+                                <a href="{% url 'food:vendor_detail' vendor.pk %}" class="btn btn-secondary">
+                                    <i class="bi bi-x-circle"></i> Cancel
+                                </a>
+                            {% else %}
+                                <a href="{% url 'food:home' %}" class="btn btn-secondary">
+                                    <i class="bi bi-x-circle"></i> Cancel
+                                </a>
+                            {% endif %}
+                            
+                            <button type="submit" class="btn btn-food">
+                                <i class="bi bi-save"></i> {{ vendor|yesno:"Update,Create" }} Restaurant
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""></script>
+
+<script>
+// Make sure the DOM is fully loaded
+document.addEventListener('DOMContentLoaded', function() {
+    initializeVendorMap();
+    
+    // Existing form validation
+    const form = document.getElementById('vendorForm');
+    const requiredFields = form.querySelectorAll('[required]');
+    
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        
+        requiredFields.forEach(function(field) {
+            if (!field.value.trim()) {
+                field.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                field.classList.remove('is-invalid');
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fill in all required fields correctly.');
+        }
+    });
+    
+    // Remove invalid class when user starts typing
+    requiredFields.forEach(function(field) {
+        field.addEventListener('input', function() {
+            if (this.value.trim()) {
+                this.classList.remove('is-invalid');
+            }
+        });
+    });
+});
+
+function initializeVendorMap() {
+    // Default coordinates (Nairobi)
+    const defaultLat = -1.286389;
+    const defaultLng = 36.817223;
+    
+    // Get hidden input fields
+    const latInput = document.getElementById('id_latitude');
+    const lngInput = document.getElementById('id_longitude');
+    const coordsDisplay = document.getElementById('coordinates-display');
+    
+    if (!latInput || !lngInput || !coordsDisplay) {
+        console.error('Missing required map elements');
+        return;
+    }
+    
+    // Get existing coordinates if editing
+    let currentLat = latInput.value ? parseFloat(latInput.value) : defaultLat;
+    let currentLng = lngInput.value ? parseFloat(lngInput.value) : defaultLng;
+    
+    // Initialize map
+    const map = L.map('vendor-map').setView([currentLat, currentLng], 13);
+    
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+    
+    // Create a custom icon
+    const vendorIcon = L.divIcon({
+        html: '<div style="background-color: #e67e22; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;">Restaurant</div>',
+        className: 'custom-div-icon',
+        iconSize: [120, 40],
+        iconAnchor: [60, 40]
+    });
+    
+    // Add marker if coordinates exist
+    let marker = null;
+    if (latInput.value && lngInput.value) {
+        marker = L.marker([currentLat, currentLng], {icon: vendorIcon}).addTo(map);
+        updateCoordinatesDisplay(currentLat, currentLng);
+    }
+    
+    // Add click event to place marker
+    map.on('click', function(e) {
+        const lat = e.latlng.lat;
+        const lng = e.latlng.lng;
+        
+        placeMarker(lat, lng);
+    });
+    
+    // Locate Me button
+    document.getElementById('locate-me').addEventListener('click', function() {
+        if ("geolocation" in navigator) {
+            coordsDisplay.textContent = "Getting your location...";
+            navigator.geolocation.getCurrentPosition(function(position) {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                placeMarker(lat, lng);
+                map.setView([lat, lng], 15);
+            }, function(error) {
+                console.error('Geolocation error:', error);
+                let errorMsg = "Unable to get your location. ";
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        errorMsg += "Please allow location access in your browser settings.";
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        errorMsg += "Location information is unavailable.";
+                        break;
+                    case error.TIMEOUT:
+                        errorMsg += "The request to get your location timed out.";
+                        break;
+                    default:
+                        errorMsg += "An unknown error occurred.";
+                }
+                coordsDisplay.textContent = errorMsg;
+                alert(errorMsg);
+            });
+        } else {
+            alert("Geolocation is not supported by your browser.");
+        }
+    });
+    
+    // Search Address button
+    document.getElementById('search-address').addEventListener('click', function() {
+        const address = document.getElementById('id_address').value;
+        const city = document.getElementById('id_city').value || 'Nairobi';
+        
+        if (!address.trim()) {
+            alert("Please enter an address in the 'Full Address' field first.");
+            return;
+        }
+        
+        // Show loading
+        coordsDisplay.textContent = "Searching for address...";
+        
+        // Use Nominatim API for geocoding
+        const searchQuery = `${address}, ${city}, Kenya`;
+        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=1`;
+        
+        fetch(url, {
+            headers: {
+                'User-Agent': 'CampusMarketplace/1.0 (contact@example.com)'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data && data.length > 0) {
+                const lat = parseFloat(data[0].lat);
+                const lng = parseFloat(data[0].lon);
+                placeMarker(lat, lng);
+                map.setView([lat, lng], 15);
+            } else {
+                coordsDisplay.textContent = "Address not found. Please try a different address or manually select on map.";
+            }
+        })
+        .catch(error => {
+            console.error('Geocoding error:', error);
+            coordsDisplay.textContent = "Error searching address. Please try manually selecting on map.";
+            alert("There was an error searching for the address. Please try again or select the location manually on the map.");
+        });
+    });
+    
+    // Clear Marker button
+    document.getElementById('clear-marker').addEventListener('click', function() {
+        if (marker) {
+            map.removeLayer(marker);
+            marker = null;
+        }
+        latInput.value = '';
+        lngInput.value = '';
+        coordsDisplay.textContent = "No location selected. Click on the map to set location.";
+    });
+    
+    function placeMarker(lat, lng) {
+        // Round to 6 decimal places
+        lat = parseFloat(lat.toFixed(6));
+        lng = parseFloat(lng.toFixed(6));
+        
+        // Remove existing marker
+        if (marker) {
+            map.removeLayer(marker);
+        }
+        
+        // Add new marker
+        marker = L.marker([lat, lng], {icon: vendorIcon}).addTo(map);
+        
+        // Update hidden inputs
+        latInput.value = lat;
+        lngInput.value = lng;
+        
+        // Update display
+        updateCoordinatesDisplay(lat, lng);
+        
+        // Add popup
+        marker.bindPopup(`
+            <div style="font-size: 14px;">
+                <strong>Restaurant Location</strong><br>
+                Latitude: ${lat.toFixed(6)}<br>
+                Longitude: ${lng.toFixed(6)}<br>
+                <small>Click outside to close</small>
+            </div>
+        `).openPopup();
+    }
+    
+    function updateCoordinatesDisplay(lat, lng) {
+        coordsDisplay.textContent = `📍 Location set! Latitude: ${lat.toFixed(6)}, Longitude: ${lng.toFixed(6)}`;
+        coordsDisplay.style.color = "#e67e22";
+        coordsDisplay.style.fontWeight = "bold";
+    }
+}
+</script>
+{% endblock %}

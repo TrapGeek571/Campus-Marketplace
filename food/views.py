@@ -1,236 +1,333 @@
 # food/views.py
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.urls import reverse
-from django.db.models import Q
-from .models import Restaurant, MenuItem
-from .forms import RestaurantForm, MenuItemForm
+from django.db.models import Q, Avg
+from .models import FoodVendor, MenuItem, FoodReview
+from .forms import FoodVendorForm, MenuItemForm, FoodReviewForm, FoodSearchForm
+from django.urls import reverse_lazy
 
-@login_required
-def food_home(request):
-    restaurants = Restaurant.objects.filter(is_verified=True).order_by('-created_at')
+class MyRestaurantsView(LoginRequiredMixin, ListView):
+    """View for user to see their own restaurants"""
+    model = FoodVendor
+    template_name = 'food/my_restaurants.html'
+    context_object_name = 'restaurants'
     
-    # Filter by cuisine
-    cuisine = request.GET.get('cuisine')
-    if cuisine:
-        restaurants = restaurants.filter(cuisine=cuisine)
-    
-    # Search functionality
-    search_query = request.GET.get('search')
-    if search_query:
-        restaurants = restaurants.filter(
-            Q(name__icontains=search_query) |
-            Q(description__icontains=search_query) |
-            Q(address__icontains=search_query)
-        )
-    
-    # Filter by verified status (admin only)
-    if request.user.is_staff:
-        show_all = request.GET.get('show_all')
-        if show_all == 'true':
-            restaurants = Restaurant.objects.all().order_by('-created_at')
+    def get_queryset(self):
+        return FoodVendor.objects.filter(
+            user=self.request.user
+        ).order_by('-created_at')
+
+def home(request):
+    """Food app homepage"""
+    featured_vendors = FoodVendor.objects.filter(
+        is_featured=True, 
+        is_active=True
+    )[:6]
     
     context = {
-        'restaurants': restaurants,
-        'title': 'Food & Restaurants',
-        'search_query': search_query or '',
-        'selected_cuisine': cuisine,
+        'featured_vendors': featured_vendors,
+        'cuisine_choices': FoodVendor.CUISINE_CHOICES,
+        'vendor_type_choices': FoodVendor.VENDOR_TYPE_CHOICES,
     }
     return render(request, 'food/home.html', context)
 
-@login_required
-def restaurant_detail(request, pk):
-    restaurant = get_object_or_404(Restaurant, pk=pk)
-    menu_items = restaurant.menu_items.filter(is_available=True)
-    
-    # Get similar restaurants (same cuisine)
-    similar_restaurants = Restaurant.objects.filter(
-        cuisine=restaurant.cuisine,
-        is_verified=True
-    ).exclude(pk=restaurant.pk).order_by('-created_at')[:3]
-    
-    context = {
-        'restaurant': restaurant,
-        'menu_items': menu_items,
-        'similar_restaurants': similar_restaurants,
-        'title': restaurant.name,
-    }
-    return render(request, 'food/restaurant_detail.html', context)
 
-@login_required
-def create_restaurant(request):
-    if request.method == 'POST':
-        form = RestaurantForm(request.POST, request.FILES)
-        if form.is_valid():
-            restaurant = form.save(commit=False)
-            restaurant.created_by = request.user
+class FoodVendorListView(ListView):
+    model = FoodVendor
+    template_name = 'food/vendor_list.html'
+    context_object_name = 'vendors'
+    paginate_by = 12
+    
+    def get_queryset(self):
+        queryset = FoodVendor.objects.filter(is_active=True)
+        
+        # Get search parameters
+        search = self.request.GET.get('search')
+        cuisine_type = self.request.GET.get('cuisine_type')
+        vendor_type = self.request.GET.get('vendor_type')
+        delivery_available = self.request.GET.get('delivery_available')
+        city = self.request.GET.get('city')
+        sort_by = self.request.GET.get('sort_by', 'newest')
+        
+        # Apply filters
+        if search:
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(description__icontains=search) |
+                Q(cuisine_type__icontains=search) |
+                Q(address__icontains=search)
+            )
+        
+        if cuisine_type:
+            queryset = queryset.filter(cuisine_type=cuisine_type)
+        
+        if vendor_type:
+            queryset = queryset.filter(vendor_type=vendor_type)
+        
+        if delivery_available == 'yes':
+            queryset = queryset.filter(delivery_available=True)
+        elif delivery_available == 'no':
+            queryset = queryset.filter(delivery_available=False)
+        
+        if city:
+            queryset = queryset.filter(city__iexact=city)
+        
+        # Apply sorting
+        if sort_by == 'rating':
+            # Annotate with average rating
+            queryset = queryset.annotate(
+                avg_rating=Avg('reviews__rating')
+            ).order_by('-avg_rating')
+        elif sort_by == 'popular':
+            queryset = queryset.order_by('-views_count')
+        else:  # newest
+            queryset = queryset.order_by('-created_at')
+        
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['search_form'] = FoodSearchForm(self.request.GET)
+        return context
+
+
+class FoodVendorDetailView(DetailView):
+    model = FoodVendor
+    template_name = 'food/vendor_detail.html'
+    context_object_name = 'vendor'
+    
+    def get_object(self):
+        obj = super().get_object()
+        obj.increment_views()  # Increment view count
+        return obj
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        vendor = self.get_object()
+        
+        # Get menu items
+        menu_items = vendor.menu_items.filter(is_available=True)
+        
+        # Get reviews
+        reviews = vendor.reviews.all().order_by('-created_at')
+        
+        # Calculate average rating
+        if reviews.exists():
+            avg_rating = reviews.aggregate(Avg('rating'))['rating__avg']
+            context['avg_rating'] = round(avg_rating, 1)
+        else:
+            context['avg_rating'] = 0
             
-            # Auto-verify if user is staff
-            if request.user.is_staff:
-                restaurant.is_verified = True
+        # Check if user has already reviewed
+        user_review = None
+        if self.request.user.is_authenticated:
+            user_review = vendor.reviews.filter(user=self.request.user).first()    
+        
+        # Add review form
+        if self.request.user.is_authenticated:
+            if user_review:
+                # User already reviewed, pre-fill form
+                context['review_form'] = FoodReviewForm(instance=user_review)
+                context['user_has_reviewed'] = True
+                context['user_review'] = user_review
+            else:
+                # New review form
+                context['review_form'] = FoodReviewForm()
+                context['user_has_reviewed'] = False
+        
+        context.update({
+            'menu_items': menu_items,
+            'reviews': reviews,
+            'similar_vendors': FoodVendor.objects.filter(
+                cuisine_type=vendor.cuisine_type,
+                is_active=True
+            ).exclude(pk=vendor.pk)[:4]
+        })
+        
+        return context
+
+
+class FoodVendorCreateView(LoginRequiredMixin, CreateView):
+    model = FoodVendor
+    form_class = FoodVendorForm
+    template_name = 'food/vendor_form.html'
+    
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        messages.success(self.request, 'Restaurant listed successfully!')
+        return super().form_valid(form)
+
+
+class FoodVendorUpdateView(LoginRequiredMixin, UpdateView):
+    model = FoodVendor
+    form_class = FoodVendorForm
+    template_name = 'food/vendor_form.html'
+    
+    def dispatch(self, request, *args, **kwargs):
+        obj = self.get_object()
+        if obj.user != request.user:
+            messages.error(request, "You don't have permission to edit this listing.")
+            return redirect('food:vendor_detail', pk=obj.pk)
+        return super().dispatch(request, *args, **kwargs)
+    
+    def form_valid(self, form):
+        messages.success(self.request, 'Restaurant updated successfully!')
+        return super().form_valid(form)
+    
+@login_required
+def add_review(request, vendor_pk):
+    """Add a review for a food vendor"""
+    vendor = get_object_or_404(FoodVendor, pk=vendor_pk, is_active=True)
+    
+    # Check if user already reviewed this vendor
+    existing_review = FoodReview.objects.filter(vendor=vendor, user=request.user).first()
+    
+    if request.method == 'POST':
+        if existing_review:
+            # Update existing review
+            form = FoodReviewForm(request.POST, instance=existing_review)
+            message = "Review updated successfully!"
+        else:
+            # Create new review
+            form = FoodReviewForm(request.POST)
+            message = "Review added successfully!"
+        
+        if form.is_valid():
+            review = form.save(commit=False)
+            review.vendor = vendor
+            review.user = request.user
+            review.save()
+            messages.success(request, message)
+        else:
+            messages.error(request, "Please correct the errors below.")
+    
+    return redirect('food:vendor_detail', pk=vendor_pk)
+
+class FoodVendorDeleteView(LoginRequiredMixin, DeleteView):
+    """View for deleting a food vendor"""
+    model = FoodVendor
+    template_name = 'food/vendor_confirm_delete.html'
+    success_url = reverse_lazy('food:my_restaurants')
+    context_object_name = 'vendor'
+    
+    def dispatch(self, request, *args, **kwargs):
+        obj = self.get_object()
+        if obj.user != request.user:
+            messages.error(request, "You don't have permission to delete this listing.")
+            return redirect('food:vendor_detail', pk=obj.pk)
+        return super().dispatch(request, *args, **kwargs)
+    
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, "Restaurant deleted successfully!")
+        return super().delete(request, *args, **kwargs)
+    
+class MenuItemCreateView(LoginRequiredMixin, CreateView):
+    """View for adding a menu item to a restaurant"""
+    model = MenuItem
+    form_class = MenuItemForm
+    template_name = 'food/menu_item_form.html'
+    
+    def dispatch(self, request, *args, **kwargs):
+        # Get the vendor from URL parameter
+        self.vendor = get_object_or_404(FoodVendor, pk=kwargs['vendor_pk'])
+        
+        # Check if user owns the vendor
+        if self.vendor.user != request.user:
+            messages.error(request, "You can only add menu items to your own restaurant.")
+            return redirect('food:vendor_detail', pk=self.vendor.pk)
             
-            restaurant.save()
-            messages.success(request, 'Restaurant submitted successfully! It will be visible after verification.')
-            return redirect('food:restaurant_detail', pk=restaurant.pk)
-        else:
-            messages.error(request, 'Please correct the errors below.')
-    else:
-        form = RestaurantForm()
+        return super().dispatch(request, *args, **kwargs)
     
-    return render(request, 'food/restaurant_form.html', {
-        'form': form,
-        'title': 'Add Restaurant',
-        'submit_text': 'Submit Restaurant',
-        'cancel_url': reverse('food:home')
-    })
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['vendor'] = self.vendor
+        context['title'] = f"Add Menu Item - {self.vendor.name}"
+        return context
+    
+    def form_valid(self, form):
+        form.instance.vendor = self.vendor
+        messages.success(self.request, 'Menu item added successfully!')
+        return super().form_valid(form)
+    
+    def get_success_url(self):
+        return redirect('food:vendor_detail', kwargs={'pk': self.vendor.pk})
 
-@login_required
-def update_restaurant(request, pk):
-    restaurant = get_object_or_404(Restaurant, pk=pk)
-    
-    # Check ownership or staff status
-    if restaurant.created_by != request.user and not request.user.is_staff:
-        messages.error(request, 'You do not have permission to edit this restaurant.')
-        return redirect('food:restaurant_detail', pk=restaurant.pk)
-    
-    if request.method == 'POST':
-        form = RestaurantForm(request.POST, request.FILES, instance=restaurant)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Restaurant updated successfully!')
-            return redirect('food:restaurant_detail', pk=restaurant.pk)
-        else:
-            messages.error(request, 'Please correct the errors below.')
-    else:
-        form = RestaurantForm(instance=restaurant)
-    
-    return render(request, 'food/restaurant_form.html', {
-        'form': form,
-        'title': 'Edit Restaurant',
-        'submit_text': 'Update Restaurant',
-        'cancel_url': reverse('food:restaurant_detail', pk=restaurant.pk)
-    })
 
-@login_required
-def delete_restaurant(request, pk):
-    restaurant = get_object_or_404(Restaurant, pk=pk)
+class MenuItemUpdateView(LoginRequiredMixin, UpdateView):
+    """View for updating a menu item"""
+    model = MenuItem
+    form_class = MenuItemForm
+    template_name = 'food/menu_item_form.html'
     
-    # Check ownership or staff status
-    if restaurant.created_by != request.user and not request.user.is_staff:
-        messages.error(request, 'You do not have permission to delete this restaurant.')
-        return redirect('food:restaurant_detail', pk=restaurant.pk)
+    def dispatch(self, request, *args, **kwargs):
+        obj = self.get_object()
+        
+        # Check if user owns the vendor
+        if obj.vendor.user != request.user:
+            messages.error(request, "You can only edit menu items for your own restaurant.")
+            return redirect('food:vendor_detail', pk=obj.vendor.pk)
+            
+        return super().dispatch(request, *args, **kwargs)
     
-    if request.method == 'POST':
-        restaurant.delete()
-        messages.success(request, 'Restaurant deleted successfully!')
-        return redirect('food:home')
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['vendor'] = self.object.vendor
+        context['title'] = f"Edit Menu Item - {self.object.vendor.name}"
+        return context
     
-    return render(request, 'food/restaurant_confirm_delete.html', {
-        'restaurant': restaurant,
-        'title': 'Delete Restaurant'
-    })
+    def form_valid(self, form):
+        messages.success(self.request, 'Menu item updated successfully!')
+        return super().form_valid(form)
+    
+    def get_success_url(self):
+        return reverse('food:vendor_detail', kwargs={'pk': self.object.vendor.pk})
 
-@login_required
-def my_restaurants(request):
-    restaurants = Restaurant.objects.filter(created_by=request.user).order_by('-created_at')
-    
-    context = {
-        'restaurants': restaurants,
-        'title': 'My Restaurants',
-    }
-    return render(request, 'food/my_restaurants.html', context)
 
-@login_required
-def create_menu_item(request, restaurant_id):
-    restaurant = get_object_or_404(Restaurant, pk=restaurant_id)
+class MenuItemDeleteView(LoginRequiredMixin, DeleteView):
+    """View for deleting a menu item"""
+    model = MenuItem
+    template_name = 'food/menu_item_confirm_delete.html'
     
-    # Check ownership
-    if restaurant.created_by != request.user and not request.user.is_staff:
-        messages.error(request, 'You do not have permission to add menu items.')
-        return redirect('food:restaurant_detail', pk=restaurant.pk)
+    def dispatch(self, request, *args, **kwargs):
+        obj = self.get_object()
+        
+        # Check if user owns the vendor
+        if obj.vendor.user != request.user:
+            messages.error(request, "You can only delete menu items from your own restaurant.")
+            return redirect('food:vendor_detail', pk=obj.vendor.pk)
+            
+        return super().dispatch(request, *args, **kwargs)
     
-    if request.method == 'POST':
-        form = MenuItemForm(request.POST, request.FILES)
-        if form.is_valid():
-            menu_item = form.save(commit=False)
-            menu_item.restaurant = restaurant
-            menu_item.save()
-            messages.success(request, 'Menu item added successfully!')
-            return redirect('food:restaurant_detail', pk=restaurant.pk)
-        else:
-            messages.error(request, 'Please correct the errors below.')
-    else:
-        form = MenuItemForm()
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['vendor'] = self.object.vendor
+        return context
     
-    return render(request, 'food/menu_item_form.html', {
-        'form': form,
-        'title': 'Add Menu Item',
-        'restaurant': restaurant,
-        'submit_text': 'Add Menu Item',
-        'cancel_url': reverse('food:restaurant_detail', pk=restaurant.pk)
-    })
-
-@login_required
-def update_menu_item(request, pk):
-    menu_item = get_object_or_404(MenuItem, pk=pk)
-    restaurant = menu_item.restaurant
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, "Menu item deleted successfully!")
+        return super().delete(request, *args, **kwargs)
     
-    # Check ownership
-    if restaurant.created_by != request.user and not request.user.is_staff:
-        messages.error(request, 'You do not have permission to edit this menu item.')
-        return redirect('food:restaurant_detail', pk=restaurant.pk)
+    def get_success_url(self):
+        return reverse('food:vendor_detail', kwargs={'pk': self.object.vendor.pk})
     
-    if request.method == 'POST':
-        form = MenuItemForm(request.POST, request.FILES, instance=menu_item)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Menu item updated successfully!')
-            return redirect('food:restaurant_detail', pk=restaurant.pk)
-        else:
-            messages.error(request, 'Please correct the errors below.')
-    else:
-        form = MenuItemForm(instance=menu_item)
+class RestaurantMenuManagementView(LoginRequiredMixin, DetailView):
+    """View for restaurant owners to manage all menu items"""
+    model = FoodVendor
+    template_name = 'food/menu_management.html'
+    context_object_name = 'vendor'
     
-    return render(request, 'food/menu_item_form.html', {
-        'form': form,
-        'title': 'Edit Menu Item',
-        'restaurant': restaurant,
-        'menu_item': menu_item,
-        'submit_text': 'Update Menu Item',
-        'cancel_url': reverse('food:restaurant_detail', pk=restaurant.pk)
-    })
-
-@login_required
-def delete_menu_item(request, pk):
-    menu_item = get_object_or_404(MenuItem, pk=pk)
-    restaurant = menu_item.restaurant
+    def dispatch(self, request, *args, **kwargs):
+        obj = self.get_object()
+        if obj.user != request.user:
+            messages.error(request, "You can only manage menu items for your own restaurant.")
+            return redirect('food:vendor_detail', pk=obj.pk)
+        return super().dispatch(request, *args, **kwargs)
     
-    # Check ownership
-    if restaurant.created_by != request.user and not request.user.is_staff:
-        messages.error(request, 'You do not have permission to delete this menu item.')
-        return redirect('food:restaurant_detail', pk=restaurant.pk)
-    
-    if request.method == 'POST':
-        menu_item.delete()
-        messages.success(request, 'Menu item deleted successfully!')
-        return redirect('food:restaurant_detail', pk=restaurant.pk)
-    
-    return render(request, 'food/menu_item_confirm_delete.html', {
-        'menu_item': menu_item,
-        'restaurant': restaurant,
-        'title': 'Delete Menu Item'
-    })
-
-# Admin-only views
-@login_required
-def verify_restaurant(request, pk):
-    if not request.user.is_staff:
-        messages.error(request, 'You do not have permission to verify restaurants.')
-        return redirect('food:restaurant_detail', pk=pk)
-    
-    restaurant = get_object_or_404(Restaurant, pk=pk)
-    restaurant.is_verified = True
-    restaurant.save()
-    messages.success(request, f'{restaurant.name} has been verified!')
-    return redirect('food:restaurant_detail', pk=restaurant.pk)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['menu_items'] = self.object.menu_items.all().order_by('category', 'name')
+        context['categories'] = dict(MenuItem.CATEGORY_CHOICES)
+        return context    

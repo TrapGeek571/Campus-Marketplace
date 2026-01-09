@@ -14,8 +14,6 @@ import json
 from django.db.models import Count
 from marketplace.models import Product
 from lostfound.models import LostFoundItem
-from housing.models import Property
-from food.models import Restaurant
 from accounts.models import CustomUser
 from datetime import date
 

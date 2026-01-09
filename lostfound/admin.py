@@ -1,64 +1,68 @@
+# lostfound/admin.py
 from django.contrib import admin
 from django.utils.html import format_html
 from .models import LostFoundItem
 
 @admin.register(LostFoundItem)
 class LostFoundItemAdmin(admin.ModelAdmin):
-    list_display = ('item_name', 'category', 'status_badge', 'location', 'user', 'date_lost', 'created_at', 'image_preview', 'status')
-    list_filter = ('status', 'category', 'date_lost', 'created_at')
-    search_fields = ('item_name', 'description', 'location', 'user__username')
-    list_editable = ('status',) # Allows you to change status directly from the list view
-    readonly_fields = ('created_at', 'user')
-    actions = ['mark_as_returned', 'mark_as_found', 'delete_inappropriate']
+    list_display = ['item_name', 'category', 'status_display', 'user', 'location', 'date_lost', 'created_at', 'image_preview']
+    list_filter = ['category', 'status', 'created_at']
+    search_fields = ['item_name', 'description', 'location', 'user__username', 'contact_info']
+    readonly_fields = ['created_at', 'updated_at', 'image_preview_large']
+    date_hierarchy = 'created_at'
+    
     fieldsets = (
-        (None, {
-            'fields': ('user', 'item_name', 'description')
+        ('Item Information', {
+            'fields': ('user', 'category', 'item_name', 'description', 'status')
         }),
-        ('Details', {
-            'fields': ('item_type', 'status', 'location', 'date_lost', 'image', 'contact_info')
+        ('Location & Contact', {
+            'fields': ('location', 'contact_info')
+        }),
+        ('Date & Image', {
+            'fields': ('date_lost', 'image', 'image_preview_large')
+        }),
+        ('Status', {
+            'fields': ('is_resolved',)
         }),
         ('Metadata', {
-            'fields': ('created_at',),
-            'classes': ('collapse',) # This section is collapsible
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
         }),
     )
-
-    # Automatically set the user when saving from admin (if not set)
-    def save_model(self, request, obj, form, change):
-        if not obj.user_id:
-            obj.user = request.user
-        super().save_model(request, obj, form, change)
-        
-    def status_badge(self, obj):
-        colors = {'lost': 'danger', 'found': 'success', 'returned': 'info'}
+    
+    def status_display(self, obj):
+        colors = {
+            'lost': 'danger',
+            'found': 'success',
+            'returned': 'info'
+        }
         return format_html(
             '<span class="badge bg-{}">{}</span>',
             colors.get(obj.status, 'secondary'),
             obj.get_status_display()
         )
-    status_badge.short_description = 'Status'
+    status_display.short_description = 'Status'
     
     def image_preview(self, obj):
         if obj.image:
-            return format_html('<img src="{}" width="50" height="50" style="object-fit: cover;" />', obj.image.url)
-        return format_html('<span class="text-muted">No image</span>')
-    image_preview.short_description = 'Preview'
+            return format_html(
+                '<img src="{}" width="50" height="50" style="object-fit: cover; border-radius: 4px;" />',
+                obj.image.build_url(width=50, height=50, crop="fill")
+            )
+        return "No image"
+    image_preview.short_description = 'Image'
     
-    def mark_as_returned(self, request, queryset):
-        queryset.update(status='returned')
-        self.message_user(request, f'{queryset.count()} items marked as returned.')
+    def image_preview_large(self, obj):
+        if obj.image:
+            return format_html(
+                '<img src="{}" width="300" style="border-radius: 8px; margin-top: 10px;" />',
+                obj.image.build_url(width=300, crop="fill")
+            )
+        return "No image uploaded"
+    image_preview_large.short_description = 'Image Preview'
+    image_preview_large.allow_tags = True
     
-    def mark_as_found(self, request, queryset):
-        queryset.update(status='found')
-        self.message_user(request, f'{queryset.count()} items marked as found.')
-    
-    def delete_inappropriate(self, request, queryset):
-        count = queryset.count()
-        queryset.delete()
-        self.message_user(request, f'{count} inappropriate items deleted.')
-    
-    mark_as_returned.short_description = "Mark selected as returned"
-    mark_as_found.short_description = "Mark selected as found"
-    delete_inappropriate.short_description = "Delete inappropriate content"    
-        
-    
+    def save_model(self, request, obj, form, change):
+        if not obj.user_id:
+            obj.user = request.user
+        super().save_model(request, obj, form, change)

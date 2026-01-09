@@ -5,25 +5,16 @@ from . import views
 app_name = 'food'
 
 urlpatterns = [
-    # Main pages
-    path('', views.food_home, name='home'),
-    path('restaurant/<int:pk>/', views.restaurant_detail, name='restaurant_detail'),
-    path('my-restaurants/', views.my_restaurants, name='my_restaurants'),
-    
-    # Restaurant CRUD operations
-    path('create/', views.create_restaurant, name='create_restaurant'),
-    path('edit/<int:pk>/', views.update_restaurant, name='update_restaurant'),
-    path('delete/<int:pk>/', views.delete_restaurant, name='delete_restaurant'),
-    
-    # Menu item operations
-    path('restaurant/<int:restaurant_id>/menu/add/', views.create_menu_item, name='create_menu_item'),
-    path('menu/edit/<int:pk>/', views.update_menu_item, name='update_menu_item'),
-    path('menu/delete/<int:pk>/', views.delete_menu_item, name='delete_menu_item'),
-    
-    # Admin functions
-    path('verify/<int:pk>/', views.verify_restaurant, name='verify_restaurant'),
-    
-    # Additional endpoints (optional)
-    # path('cuisine/<str:cuisine_type>/', views.cuisine_list, name='cuisine_list'),
-    # path('near-campus/', views.near_campus, name='near_campus'),
+    path('', views.home, name='home'),
+    path('vendors/', views.FoodVendorListView.as_view(), name='vendor_list'),
+    path('vendor/<int:pk>/', views.FoodVendorDetailView.as_view(), name='vendor_detail'),
+    path('vendor/add/', views.FoodVendorCreateView.as_view(), name='add_vendor'),
+    path('vendor/<int:pk>/edit/', views.FoodVendorUpdateView.as_view(), name='edit_vendor'),
+    path('vendor/<int:pk>/delete/', views.FoodVendorDeleteView.as_view(), name='delete_vendor'),
+    path('my-restaurants/', views.MyRestaurantsView.as_view(), name='my_restaurants'),
+    path('vendor/<int:vendor_pk>/review/add/', views.add_review, name='add_review'),
+    path('vendor/<int:vendor_pk>/menu/add/', views.MenuItemCreateView.as_view(), name='add_menu_item'),
+    path('menu/<int:pk>/edit/', views.MenuItemUpdateView.as_view(), name='edit_menu_item'),
+    path('menu/<int:pk>/delete/', views.MenuItemDeleteView.as_view(), name='delete_menu_item'),
+    path('vendor/<int:pk>/menu/manage/', views.RestaurantMenuManagementView.as_view(), name='manage_menu'),
 ]

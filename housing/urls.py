@@ -1,24 +1,20 @@
-# housing/urls.py
 from django.urls import path
 from . import views
 
 app_name = 'housing'
 
 urlpatterns = [
-    # Main pages
+    # Public views
     path('', views.housing_home, name='home'),
-    path('property/<int:pk>/', views.property_detail, name='property_detail'),
-    path('my-properties/', views.my_properties, name='my_properties'),
+    path('listing/<int:pk>/', views.listing_detail, name='listing_detail'),
+    path('cities/', views.cities_list, name='cities'),
+    path('city/<str:city>/', views.city_listings, name='city_listings'),
     
-    # CRUD operations
-    path('create/', views.create_property, name='create_property'),
-    path('edit/<int:pk>/', views.update_property, name='update_property'),
-    path('delete/<int:pk>/', views.delete_property, name='delete_property'),
-    
-    # Property management
-    path('toggle/<int:pk>/', views.toggle_availability, name='toggle_availability'),
-    
-    # Filter/sort endpoints (optional for AJAX)
-    # path('filter/', views.property_filter, name='property_filter'),
-    # path('search/', views.property_search, name='property_search'),
+    # User views (require login)
+    path('create/', views.create_listing, name='create_listing'),
+    path('edit/<int:pk>/', views.update_listing, name='update_listing'),
+    path('delete/<int:pk>/', views.delete_listing, name='delete_listing'),
+    path('my-listings/', views.my_listings, name='my_listings'),
+    path('favorites/', views.my_favorites, name='my_favorites'),
+    path('favorite/<int:pk>/', views.toggle_favorite, name='toggle_favorite'),
 ]

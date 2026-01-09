@@ -2,6 +2,9 @@ import os
 import sys
 from pathlib import Path
 from dotenv import load_dotenv
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 
 load_dotenv()
 
@@ -65,6 +68,17 @@ TEMPLATES = [
         },
     },
 ]
+
+'''LEAFLET_CONFIG = {
+    'DEFAULT_CENTER': (-1.286389, 36.817223),  # Nairobi coordinates
+    'DEFAULT_ZOOM': 12,
+    'MAX_ZOOM': 20,
+    'MIN_ZOOM': 3,
+    'SCALE': 'both',
+    'ATTRIBUTION_PREFIX': 'Powered by OpenStreetMap',
+    'RESET_VIEW': False,
+    'TILES': 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+}'''
 
 WSGI_APPLICATION = 'campus_marketplace.wsgi.application'
 

@@ -1,57 +1,155 @@
-{% extends 'base.html' %} {% block title %}Food & Restaurants{% endblock %} {%
-block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h2>Campus Restaurants</h2>
-  {% if user.is_authenticated %}
-  <a href="{% url 'food:create_restaurant' %}" class="btn btn-danger">
-    <i class="bi bi-plus-circle"></i> Add Restaurant
-  </a>
-  {% endif %}
-</div>
+{% extends 'food/base.html' %}
 
-<div class="row">
-  {% for restaurant in restaurants %}
-  <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
-    <div class="card h-100">
-      {% if restaurant.image %}
-      <img
-        src="{{ restaurant.image.url }}"
-        class="card-img-top"
-        alt="{{ restaurant.name }}"
-        style="height: 150px; object-fit: cover"
-      />
-      {% else %}
-      <div class="text-center py-4 bg-light text-muted">
-        <i class="bi bi-egg-fried" style="font-size: 3rem"></i>
-      </div>
-      {% endif %}
-      <div class="card-body">
-        <h5 class="card-title">{{ restaurant.name }}</h5>
-        <p class="small text-muted">
-          <span class="badge bg-secondary"
-            >{{ restaurant.get_cuisine_display }}</span
-          >
-          {% if restaurant.is_verified %}
-          <span class="badge bg-success">Verified</span>
-          {% endif %}
-        </p>
-        <p class="card-text small">
-          {{ restaurant.description|truncatechars:80 }}
-        </p>
-        <div class="mt-auto">
-          <a
-            href="{% url 'food:restaurant_detail' restaurant.pk %}"
-            class="btn btn-sm btn-outline-danger w-100"
-            >View Menu</a
-          >
+{% block title %}Campus Food Marketplace - Find Restaurants Near You{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Hero Section -->
+    <div class="row align-items-center py-5">
+        <div class="col-md-6">
+            <h1 class="display-4 fw-bold">Find Amazing Food Around Campus</h1>
+            <p class="lead">Discover restaurants, cafes, tuck shops and more near your campus. Order food or dine in at the best spots around.</p>
+            <div class="mt-4">
+                <a href="{% url 'food:vendor_list' %}" class="btn btn-food btn-lg">
+                    <i class="bi bi-search"></i> Explore Restaurants
+                </a>
+                <a href="{% url 'food:add_vendor' %}" class="btn btn-outline-secondary btn-lg ms-2">
+                    <i class="bi bi-plus-circle"></i> List Your Business
+                </a>
+            </div>
         </div>
-      </div>
+        <div class="col-md-6">
+            <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" 
+                 alt="Campus Food" class="img-fluid rounded shadow">
+        </div>
     </div>
-  </div>
-  {% empty %}
-  <div class="col-12">
-    <div class="alert alert-info">No restaurants listed yet.</div>
-  </div>
-  {% endfor %}
-</div>
 
+    <!-- Search Bar -->
+    <div class="card shadow mb-5">
+        <div class="card-body p-4">
+            <form method="GET" action="{% url 'food:vendor_list' %}" class="row g-3">
+                <div class="col-md-5">
+                    <input type="text" name="search" class="form-control form-control-lg" 
+                           placeholder="What are you craving for?">
+                </div>
+                <div class="col-md-3">
+                    <select name="cuisine_type" class="form-select form-select-lg">
+                        <option value="">All Cuisines</option>
+                        {% for value, label in cuisine_choices %}
+                        <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="city" class="form-select form-select-lg">
+                        <option value="">All Cities</option>
+                        <option value="Nairobi">Nairobi</option>
+                        <option value="Mombasa">Mombasa</option>
+                        <option value="Kisumu">Kisumu</option>
+                        <option value="Nakuru">Nakuru</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-food btn-lg w-100">
+                        <i class="bi bi-search"></i> Search
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Featured Restaurants -->
+    <div class="row mb-5">
+        <div class="col">
+            <h2 class="mb-4">Featured Restaurants</h2>
+            <div class="row">
+                {% for vendor in featured_vendors %}
+                <div class="col-md-4 mb-4">
+                    <div class="card food-card h-100">
+                        {% if vendor.main_image %}
+                        <img src="{{ vendor.main_image.url }}" class="card-img-top" alt="{{ vendor.name }}" 
+                             style="height: 200px; object-fit: cover;">
+                        {% else %}
+                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
+                             style="height: 200px;">
+                            <i class="bi bi-shop" style="font-size: 3rem; color: #ccc;"></i>
+                        </div>
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ vendor.name }}</h5>
+                            <p class="card-text">
+                                <span class="cuisine-tag">{{ vendor.get_cuisine_type_display }}</span>
+                                <span class="cuisine-tag">{{ vendor.get_vendor_type_display }}</span>
+                            </p>
+                            <p class="card-text">
+                                <i class="bi bi-geo-alt text-danger"></i> {{ vendor.neighborhood|default:vendor.city }}
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    {% if vendor.delivery_available %}
+                                    <span class="badge bg-success">Delivery</span>
+                                    {% endif %}
+                                    {% if vendor.dine_in_available %}
+                                    <span class="badge bg-primary">Dine-in</span>
+                                    {% endif %}
+                                </div>
+                                <div class="rating-stars">
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-half"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-white">
+                            <a href="{% url 'food:vendor_detail' vendor.pk %}" class="btn btn-outline-food w-100">
+                                View Restaurant
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> No featured restaurants yet.
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Categories -->
+    <div class="row mb-5">
+        <div class="col">
+            <h2 class="mb-4">Browse by Category</h2>
+            <div class="row g-3">
+                {% for value, label in vendor_type_choices %}
+                <div class="col-md-2 col-sm-4 col-6">
+                    <a href="{% url 'food:vendor_list' %}?vendor_type={{ value }}" 
+                       class="card text-center text-decoration-none p-3 food-card">
+                        <div class="mb-2">
+                            {% if value == 'restaurant' %}
+                            <i class="bi bi-cup-hot" style="font-size: 2rem; color: var(--food-primary);"></i>
+                            {% elif value == 'cafe' %}
+                            <i class="bi bi-cup-straw" style="font-size: 2rem; color: var(--food-primary);"></i>
+                            {% elif value == 'fast_food' %}
+                            <i class="bi bi-burger" style="font-size: 2rem; color: var(--food-primary);"></i>
+                            {% elif value == 'food_truck' %}
+                            <i class="bi bi-truck" style="font-size: 2rem; color: var(--food-primary);"></i>
+                            {% elif value == 'bakery' %}
+                            <i class="bi bi-cake" style="font-size: 2rem; color: var(--food-primary);"></i>
+                            {% else %}
+                            <i class="bi bi-shop" style="font-size: 2rem; color: var(--food-primary);"></i>
+                            {% endif %}
+                        </div>
+                        <span class="fw-bold">{{ label }}</span>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,43 +1,343 @@
-{% extends 'base.html' %}
-{% block title %}Housing{% endblock %}
+{% extends 'housing/base.html' %}
+
+{% block title %}Student Housing - Find Rooms & Apartments{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Student Housing</h2>
-    {% if user.is_authenticated %}
-    <a href="{% url 'housing:create_property' %}" class="btn btn-success">
-        <i class="bi bi-plus-circle"></i> List Property
-    </a>
-    {% endif %}
-</div>
-
-<div class="row">
-    {% for property in properties %}
-    <div class="col-lg-4 col-md-6 mb-4">
-        <div class="card h-100">
-            {% if property.image %}
-            <img src="{{ property.image.url }}" class="card-img-top" alt="{{ property.title }}" style="height: 200px; object-fit: cover;">
-            {% else %}
-            <div class="text-center py-5 bg-light text-muted">No Image</div>
-            {% endif %}
+<!-- Search Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0"><i class="bi bi-search"></i> Find Student Housing</h4>
+            </div>
             <div class="card-body">
-                <h5 class="card-title">{{ property.title }}</h5>
-                <p class="text-success fw-bold">KSh {{ property.rent }}/month</p>
-                <p class="small">
-                    <i class="bi bi-house-door"></i> {{ property.get_property_type_display }}
-                    <span class="mx-2">|</span>
-                    <i class="bi bi-door-closed"></i> {{ property.bedrooms }} bedroom{{ property.bedrooms|pluralize }}
-                    <span class="mx-2">|</span>
-                    <i class="bi bi-battery-full"></i> {{ property.is_furnished|yesno:"Furnished,Unfurnished" }}
-                </p>
-                <a href="{% url 'housing:property_detail' property.pk %}" class="btn btn-outline-success w-100">View Details</a>
+                <form method="get" class="row g-3">
+                    <!-- Quick Search -->
+                    <div class="col-md-4">
+                        <input type="text" name="search" class="form-control" 
+                               placeholder="Search listings..." value="{{ form.search.value|default:'' }}">
+                    </div>
+                    
+                    <!-- Listing Type -->
+                    <div class="col-md-3">
+                        <select name="listing_type" class="form-select">
+                            <option value="">All Types</option>
+                            <option value="rental" {% if form.listing_type.value == "rental" %}selected{% endif %}>Rental</option>
+                            <option value="sublet" {% if form.listing_type.value == "sublet" %}selected{% endif %}>Sublet</option>
+                            <option value="roommate" {% if form.listing_type.value == "roommate" %}selected{% endif %}>Roommate</option>
+                            <option value="housing_wanted" {% if form.listing_type.value == "housing_wanted" %}selected{% endif %}>Housing Wanted</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Property Type -->
+                    <div class="col-md-3">
+                        <select name="property_type" class="form-select">
+                            <option value="">All Properties</option>
+                            <option value="apartment" {% if form.property_type.value == "apartment" %}selected{% endif %}>Apartment</option>
+                            <option value="house" {% if form.property_type.value == "house" %}selected{% endif %}>House</option>
+                            <option value="condo" {% if form.property_type.value == "condo" %}selected{% endif %}>Condo</option>
+                            <option value="dorm" {% if form.property_type.value == "dorm" %}selected{% endif %}>Dorm</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-search"></i> Search
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Advanced Filters (Collapsible) -->
+                <div class="mt-3">
+                    <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#advancedFilters">
+                        <i class="bi bi-filter"></i> Advanced Filters
+                    </button>
+                    
+                    <div class="collapse mt-3" id="advancedFilters">
+                        <div class="row g-3">
+                            <!-- City -->
+                            <div class="col-md-3">
+                                <input type="text" name="city" class="form-control" placeholder="City" 
+                                       value="{{ form.city.value|default:'' }}">
+                            </div>
+                            
+                            <!-- Price Range -->
+                            <div class="col-md-3">
+                                <input type="number" name="min_price" class="form-control" placeholder="Min Price" 
+                                       min="0" value="{{ form.min_price.value|default:'' }}">
+                            </div>
+                            <div class="col-md-3">
+                                <input type="number" name="max_price" class="form-control" placeholder="Max Price" 
+                                       min="0" value="{{ form.max_price.value|default:'' }}">
+                            </div>
+                            
+                            <!-- Bedrooms -->
+                            <div class="col-md-3">
+                                <input type="number" name="bedrooms" class="form-control" placeholder="Bedrooms" 
+                                       min="1" value="{{ form.bedrooms.value|default:'' }}">
+                            </div>
+                            
+                            <!-- Furnished & Utilities -->
+                            <div class="col-md-4">
+                                <select name="furnished" class="form-select">
+                                    <option value="">Any Furnishing</option>
+                                    <option value="furnished" {% if form.furnished.value == "furnished" %}selected{% endif %}>Furnished</option>
+                                    <option value="semi" {% if form.furnished.value == "semi" %}selected{% endif %}>Semi-Furnished</option>
+                                    <option value="unfurnished" {% if form.furnished.value == "unfurnished" %}selected{% endif %}>Unfurnished</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <select name="utilities_included" class="form-select">
+                                    <option value="">Utilities</option>
+                                    <option value="yes" {% if form.utilities_included.value == "yes" %}selected{% endif %}>Utilities Included</option>
+                                    <option value="no" {% if form.utilities_included.value == "no" %}selected{% endif %}>Not Included</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Sort -->
+                            <div class="col-md-4">
+                                <select name="sort_by" class="form-select">
+                                    <option value="newest" {% if form.sort_by.value == "newest" %}selected{% endif %}>Newest First</option>
+                                    <option value="price_low" {% if form.sort_by.value == "price_low" %}selected{% endif %}>Price: Low to High</option>
+                                    <option value="price_high" {% if form.sort_by.value == "price_high" %}selected{% endif %}>Price: High to Low</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    {% empty %}
-    <div class="col-12">
-        <div class="alert alert-info">No properties available at the moment.</div>
+</div>
+
+<!-- Stats -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="mb-0">{{ total_listings }}</h3>
+                <p class="text-muted mb-0">Total Listings</p>
+            </div>
+        </div>
     </div>
-    {% endfor %}
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="mb-0">{{ cities|length }}</h3>
+                <p class="text-muted mb-0">Cities</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="mb-0">{% if featured_listings %}{{ featured_listings|length }}{% else %}0{% endif %}</h3>
+                <p class="text-muted mb-0">Featured</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <a href="{% url 'housing:cities' %}" class="btn btn-success w-100">
+                    <i class="fas fa-map-marker-alt"></i> Browse by City
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Featured Listings -->
+{% if featured_listings %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 class="mb-3"><i class="fas fa-star text-warning"></i> Featured Listings</h4>
+        <div class="row">
+            {% for listing in featured_listings %}
+            <div class="col-md-4">
+                <div class="card listing-card">
+                    <div class="card-img-top-container">
+                        {% if listing.main_image %}
+                        <img src="{{ listing.main_image.url }}" 
+                             class="card-img-top" 
+                             alt="{{ listing.title }}"
+                             style="height: 200px; object-fit: cover;">
+                        {% else %}
+                        <div class="bg-secondary d-flex align-items-center justify-content-center" 
+                             style="height: 200px;">
+                            <i class="bi bi-house fa-3x text-white"></i>
+                        </div>
+                        {% endif %}
+                        <span class="badge-type badge bg-warning">
+                            {{ listing.get_listing_type_display }}
+                        </span>
+                        <span class="price-badge">{{ listing.price_display }}</span>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">{{ listing.title|truncatechars:40 }}</h5>
+                        <p class="card-text text-muted">
+                            <i class="bi bi-geo-alt"></i> {{ listing.city }}
+                            {% if listing.neighborhood %}, {{ listing.neighborhood }}{% endif %}
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="badge bg-light text-dark">
+                                    <i class="bi bi-bed"></i> {{ listing.bedrooms }}
+                                </span>
+                                <span class="badge bg-light text-dark">
+                                    <i class="bi bi-bath"></i> {{ listing.bathrooms }}
+                                </span>
+                            </div>
+                            <a href="{% url 'housing:listing_detail' listing.pk %}" class="btn btn-sm btn-outline-primary">
+                                View <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- All Listings -->
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4>All Listings</h4>
+            <span class="badge bg-primary">{{ total_listings }} available</span>
+        </div>
+        
+        {% if listings %}
+        <div class="row">
+            {% for listing in listings %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card listing-card h-100">
+                    <div class="card-img-top-container">
+                        {% if listing.main_image %}
+                        <img src="{{ listing.main_image.url }}" 
+                             class="card-img-top" 
+                             alt="{{ listing.title }}"
+                             style="height: 200px; object-fit: cover;">
+                        {% else %}
+                        <div class="bg-secondary d-flex align-items-center justify-content-center" 
+                             style="height: 200px;">
+                            <i class="bi bi-house fa-3x text-white"></i>
+                        </div>
+                        {% endif %}
+                        <span class="badge-type badge bg-{% if listing.listing_type == 'rental' %}primary{% elif listing.listing_type == 'sublet' %}info{% elif listing.listing_type == 'roommate' %}success{% else %}warning{% endif %}">
+                            {{ listing.get_listing_type_display }}
+                        </span>
+                        <span class="price-badge">{{ listing.price_display }}</span>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">{{ listing.title|truncatechars:40 }}</h5>
+                        <p class="card-text text-muted">
+                            <i class="bi bi-geo-alt"></i> {{ listing.city }}
+                            {% if listing.neighborhood %}, {{ listing.neighborhood }}{% endif %}
+                        </p>
+                        <p class="card-text small">{{ listing.description|truncatechars:80 }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="badge bg-light text-dark">
+                                    <i class="bi bi-bed"></i> {{ listing.bedrooms }} bed
+                                </span>
+                                <span class="badge bg-light text-dark">
+                                    <i class="bi bi-bath"></i> {{ listing.bathrooms }} bath
+                                </span>
+                                {% if listing.utilities_included %}
+                                <span class="badge bg-success text-white">
+                                    <i class="bi bi-bolt"></i> Utilities
+                                </span>
+                                {% endif %}
+                            </div>
+                            <a href="{% url 'housing:listing_detail' listing.pk %}" class="btn btn-sm btn-outline-primary">
+                                Details
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <small class="text-muted">
+                            <i class="bi bi-calendar"></i> Available: {{ listing.available_from|date:"M d, Y" }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        {% if listings.has_other_pages %}
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if listings.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ listings.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                        Previous
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for num in listings.paginator.page_range %}
+                    {% if listings.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > listings.number|add:'-3' and num < listings.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if listings.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ listings.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                        Next
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-search fa-3x text-muted mb-3"></i>
+            <h4>No listings found</h4>
+            <p class="text-muted">Try adjusting your search filters or check back later.</p>
+            <a href="{% url 'housing:create_listing' %}" class="btn btn-primary">
+                <i class="bi bi-plus"></i> Be the first to list!
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Quick Links -->
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5 class="card-title">Looking for housing?</h5>
+                <p class="card-text">Join thousands of students finding their perfect home on Campus Marketplace</p>
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="{% url 'housing:create_listing' %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Post a Listing
+                    </a>
+                    <a href="{% url 'housing:cities' %}" class="btn btn-outline-success">
+                        <i class="bi bi-geo-alt"></i> Browse by City
+                    </a>
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'housing:my_favorites' %}" class="btn btn-outline-danger">
+                        <i class="bi bi-heart"></i> My Favorites
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

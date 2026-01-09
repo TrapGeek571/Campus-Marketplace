@@ -1,7 +1,8 @@
 Django>=4.2
-cloudinary
-django-cloudinary-storage
+cloudinary==1.38.0
+django-cloudinary-storage==0.3.0
 Pillow
 crispy-bootstrap5
 django-crispy-forms
 python-dotenv
+django-leaflet==0.28.3
