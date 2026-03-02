@@ -1,0 +1,37 @@
+{% extends "marketplace/base.html" %}
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3>{{ seller.username }}'s Store</h3>
+                </div>
+                <div class="card-body">
+                    {% if seller_profile.is_verified %}
+                        <span class="badge bg-success mb-2"><i class="fas fa-check-circle"></i> Verified Seller</span>
+                    {% endif %}
+                    {% if seller_profile.store_name %}
+                        <h5>{{ seller_profile.store_name }}</h5>
+                    {% endif %}
+                    {% if seller_profile.store_description %}
+                        <p>{{ seller_profile.store_description }}</p>
+                    {% endif %}
+                    <p><strong>Member since:</strong> {{ seller.date_joined|date:"M Y" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <h4>Products for Sale ({{ products|length }})</h4>
+        {% for product in products %}
+            <div class="col-md-4 col-sm-6 mb-4">
+                {% include "marketplace/product_card.html" with product=product %}
+            </div>
+        {% empty %}
+            <p class="text-muted">No active listings at the moment.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -7,6 +7,13 @@ import cloudinary.uploader
 import cloudinary.api
 
 load_dotenv()
+MPESA_ENVIRONMENT = os.getenv('MPESA_ENVIRONMENT')
+MPESA_CONSUMER_KEY = os.getenv('MPESA_CONSUMER_KEY')
+MPESA_CONSUMER_SECRET = os.getenv('MPESA_CONSUMER_SECRET')
+MPESA_SHORTCODE = os.getenv('MPESA_SHORTCODE')
+MPESA_PASSKEY = os.getenv('MPESA_PASSKEY')
+MPESA_EXPRESS_SHORTCODE = os.getenv('MPESA_EXPRESS_SHORTCODE')
+MPESA_CALLBACK_URL = os.getenv('MPESA_CALLBACK_URL')
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -16,7 +23,15 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-default-key-for-dev')
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "localhost",
+    "127.0.0.1",
+    "peatier-skyla-obediently.ngrok-free.dev", 
+]
+
+CSRF_TRUSTED_ORIGINS = [
+        "https://peatier-skyla-obediently.ngrok-free.dev",
+]
 
 INSTALLED_APPS = [
     'accounts',
@@ -39,6 +54,7 @@ INSTALLED_APPS = [
     'lostfound',
     'housing',
     'food',
+    'mpesa',
 ]
 
 MIDDLEWARE = [

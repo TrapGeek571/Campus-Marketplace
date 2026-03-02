@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Marketplace - Campus Marketplace{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-top: 20px;
+        }
+        .card {
+            margin-bottom: 20px;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .card-header {
+            background-color: #0d6efd;
+            color: white;
+        }
+        .product-card {
+            transition: transform 0.2s;
+            height: 100%;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        .badge-category {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .price-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1;
+            background: rgba(13, 110, 253, 0.9);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .card-img-top-container {
+            height: 200px;
+            overflow: hidden;
+            position: relative;
+        }
+        .card-img-top-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .alert-messages {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            min-width: 300px;
+        }
+        .filter-sidebar {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .hero-marketplace {
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+            color: white;
+            padding: 40px 0;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .nav-marketplace {
+            background-color: #0d6efd;
+        }
+        .search-box {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .condition-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .condition-new {
+            background-color: #d1e7dd;
+            color: #0f5132;
+        }
+        .condition-used-good {
+            background-color: #fff3cd;
+            color: #664d03;
+        }
+        .condition-used-fair {
+            background-color: #f8d7da;
+            color: #842029;
+        }
+        .sort-dropdown .dropdown-menu {
+            min-width: 200px;
+        }
+        .view-toggle .btn {
+            border-radius: 0;
+        }
+        .view-toggle .btn:first-child {
+            border-top-left-radius: 4px;
+            border-bottom-left-radius: 4px;
+        }
+        .view-toggle .btn:last-child {
+            border-top-right-radius: 4px;
+            border-bottom-right-radius: 4px;
+        }
+        .required:after {
+            content: " *";
+            color: #dc3545;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark nav-marketplace mb-4">
+        <div class="container">
+            <!-- Back to Main button -->
+            <a href="{% url 'home' %}" class="btn btn-light btn-sm me-3">
+                <i class="fas fa-arrow-left"></i> Back to Main
+            </a>
+            
+            <a class="navbar-brand" href="{% url 'marketplace:home' %}">
+                <i class="fas fa-store"></i> Marketplace
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'marketplace:home' %}">
+                            <i class="fas fa-home"></i> Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'marketplace:categories' %}">
+                            <i class="fas fa-tags"></i> Categories
+                        </a>
+                    </li>
+                    
+                    {% if user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'marketplace:create_product' %}">
+                            <i class="fas fa-plus-circle"></i> Sell Item
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'marketplace:my_listings' %}">
+                            <i class="fas fa-list"></i> My Products
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'marketplace:favorites' %}">
+                            <i class="fas fa-heart"></i> Favorites
+                        </a>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'accounts:profile' %}">
+                            <i class="fas fa-user"></i> {{ user.username }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'accounts:logout' %}">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'accounts:login' %}?next={{ request.path }}">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'accounts:register' %}?next={{ request.path }}">
+                            <i class="fas fa-user-plus"></i> Register
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Messages -->
+    {% if messages %}
+    <div class="alert-messages">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow" role="alert">
+            <div class="d-flex align-items-center">
+                {% if message.tags == 'success' %}
+                    <i class="fas fa-check-circle me-2"></i>
+                {% elif message.tags == 'error' %}
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                {% elif message.tags == 'warning' %}
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                {% else %}
+                    <i class="fas fa-info-circle me-2"></i>
+                {% endif %}
+                <div>{{ message }}</div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Marketplace Hero Section -->
+        <div class="hero-marketplace text-center mb-4">
+            <div class="container">
+                <h1 class="display-5 mb-3"><i class="fas fa-store me-2"></i>Campus Marketplace</h1>
+                <p class="lead mb-4">Buy, sell, and trade items with fellow students</p>
+                
+                <!-- Search Box -->
+                <div class="search-box">
+                    <form method="GET" action="{% url 'marketplace:home' %}" class="input-group">
+                        <input type="text" name="q" class="form-control" 
+                               placeholder="Search for books, electronics, furniture, clothing..." 
+                               value="{{ request.GET.q|default:'' }}">
+                        <button class="btn btn-light" type="submit">
+                            <i class="fas fa-search"></i> Search
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content -->
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-5 py-4 bg-light border-top">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-store"></i> Campus Marketplace</h5>
+                    <p class="text-muted mb-0">Your go-to place for buying and selling campus items</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <p class="mb-0 text-muted">
+                        &copy; {% now "Y" %} Campus Marketplace - Student Trading Platform
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Auto-dismiss alerts after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                var alerts = document.querySelectorAll('.alert');
+                alerts.forEach(function(alert) {
+                    var bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                });
+            }, 5000);
+        });
+
+        // View toggle functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const gridViewBtn = document.querySelector('.btn-grid');
+            const listViewBtn = document.querySelector('.btn-list');
+            const productsContainer = document.querySelector('#products-container');
+            
+            if (gridViewBtn && listViewBtn && productsContainer) {
+                gridViewBtn.addEventListener('click', function() {
+                    productsContainer.classList.remove('list-view');
+                    productsContainer.classList.add('grid-view');
+                    gridViewBtn.classList.add('active');
+                    listViewBtn.classList.remove('active');
+                });
+                
+                listViewBtn.addEventListener('click', function() {
+                    productsContainer.classList.remove('grid-view');
+                    productsContainer.classList.add('list-view');
+                    listViewBtn.classList.add('active');
+                    gridViewBtn.classList.remove('active');
+                });
+            }
+
+            // Filter form submission
+            const filterForm = document.querySelector('#filter-form');
+            if (filterForm) {
+                const applyFiltersBtn = document.querySelector('#apply-filters');
+                if (applyFiltersBtn) {
+                    applyFiltersBtn.addEventListener('click', function() {
+                        filterForm.submit();
+                    });
+                }
+            }
+
+            // Price range display
+            const priceRange = document.querySelector('#price-range');
+            const priceValue = document.querySelector('#price-value');
+            if (priceRange && priceValue) {
+                priceValue.textContent = 'Ksh ' + priceRange.value;
+                priceRange.addEventListener('input', function() {
+                    priceValue.textContent = 'Ksh ' + this.value;
+                });
+            }
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

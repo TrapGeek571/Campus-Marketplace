@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h3>Payment Status</h3>
+        </div>
+        <div class="card-body">
+            <p><strong>Transaction ID:</strong> {{ transaction.id }}</p>
+            <p><strong>Phone Number:</strong> {{ transaction.phone_number }}</p>
+            <p><strong>Amount:</strong> Ksh {{ transaction.amount }}</p>
+            <p><strong>Status:</strong> 
+                {% if transaction.status == 'Completed' %}
+                    <span class="badge bg-success">Completed</span>
+                {% elif transaction.status == 'Failed' %}
+                    <span class="badge bg-danger">Failed</span>
+                {% else %}
+                    <span class="badge bg-warning">Pending</span>
+                {% endif %}
+            </p>
+            {% if transaction.status == 'Pending' %}
+                <p>Please check your phone and complete the payment.</p>
+                <p>The page will refresh automatically in <span id="countdown">30</span> seconds.</p>
+                <script>
+                    let seconds = 30;
+                    function countdown() {
+                        seconds--;
+                        document.getElementById('countdown').innerText = seconds;
+                        if (seconds <= 0) {
+                            location.reload();
+                        }
+                    }
+                    setInterval(countdown, 1000);
+                </script>
+            {% elif transaction.status == 'Completed' %}
+                <p>Payment successful! Thank you for your purchase.</p>
+                <a href="{% url 'marketplace:home' %}" class="btn btn-primary">Back to Marketplace</a>
+            {% else %}
+                <p>Payment failed. Please try again.</p>
+                <a href="{% url 'marketplace:product_detail' transaction.product.id %}" class="btn btn-warning">Try Again</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

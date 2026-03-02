@@ -1,4 +1,5 @@
-{% extends 'base.html' %}
+{% extends 'marketplace/base.html' %}
+
 {% block title %}{{ product.title }}{% endblock %}
 
 {% block content %}
@@ -38,6 +39,26 @@
                     <li class="list-group-item"><strong>Category:</strong> {{ product.category.name|default:"Not specified" }}</li>
                     <li class="list-group-item"><strong>Last Updated:</strong> {{ product.updated_at|timesince }} ago</li>
                 </ul>
+                {% if not product.is_sold %}
+<div class="payment-section mt-4">
+    <h5>Purchase this item</h5>
+    <form method="POST" action="{% url 'mpesa:initiate_payment' product.id %}">
+        {% csrf_token %}
+        <div class="input-group mb-3">
+            <span class="input-group-text"><i class="fas fa-mobile-alt"></i></span>
+            <input type="text" name="phone_number" class="form-control" 
+                   placeholder="Enter M-Pesa phone number (e.g., 0712345678)" required>
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-lock"></i> Pay Ksh {{ product.price }} via M-Pesa
+            </button>
+        </div>
+    </form>
+</div>
+{% else %}
+<div class="alert alert-secondary">
+    <i class="fas fa-check-circle"></i> This item has been sold.
+</div>
+{% endif %}
 
                 <!-- Action Buttons -->
                 <div class="d-grid gap-2 d-md-flex">
@@ -60,6 +81,9 @@
 </div>
 
 <!-- Contact Seller Modal -->
+ {% if product.seller.seller_profile.is_verified %}
+    <span class="badge bg-success" title="Verified Seller"><i class="fas fa-check-circle"></i></span>
+{% endif %}
 <div class="modal fade" id="contactModal">
     <div class="modal-dialog">
         <div class="modal-content">

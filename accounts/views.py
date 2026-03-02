@@ -189,8 +189,8 @@ def dashboard_view(request):
     # Get counts for dashboard
     from marketplace.models import Product
     from lostfound.models import LostFoundItem
-    from housing.models import Property
-    from food.models import Restaurant
+    from housing.models import HousingListing
+    from food.models import FoodVendor
     
     try:
         product_count = Product.objects.filter(seller=user).count()

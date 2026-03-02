@@ -1,57 +1,84 @@
-{% extends 'base.html' %}
-{% load crispy_forms_tags %}
+{% extends "marketplace/base.html" %}
 
-{% block title %}{{ title }}{% endblock %}
+{% block title %}
+    {% if product %}Edit {{ product.title }}{% else %}Create New Listing{% endif %} - Campus Marketplace
+{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-8 col-lg-7">
-        <div class="card shadow">
-            <div class="card-header bg-primary text-white">
-                <h4 class="mb-0"><i class="bi bi-bag-plus me-2"></i>{{ title }}</h4>
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header {% if product %}bg-warning{% else %}bg-success{% endif %} text-white">
+                <h3 class="mb-0">
+                    <i class="fas fa-{% if product %}edit{% else %}plus-circle{% endif %} me-2"></i>
+                    {% if product %}Edit Product{% else %}Create New Listing{% endif %}
+                </h3>
             </div>
-            <div class="card-body p-4">
-                <form method="post" enctype="multipart/form-data" novalidate>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     
-                    <div class="row">
-                        <div class="col-md-8">
-                            {{ form.title|as_crispy_field }}
+                    {{ form.non_field_errors }}
+                    
+                    {% for field in form %}
+                    <div class="mb-3">
+                        <label for="{{ field.id_for_label }}" class="form-label">
+                            {{ field.label }}
+                            {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                        </label>
+                        {{ field }}
+                        {% if field.help_text %}
+                        <div class="form-text">{{ field.help_text }}</div>
+                        {% endif %}
+                        {% if field.errors %}
+                        <div class="alert alert-danger mt-1">
+                            {{ field.errors }}
                         </div>
-                        <div class="col-md-4">
-                            {{ form.category|as_crispy_field }}
-                        </div>
+                        {% endif %}
                     </div>
+                    {% endfor %}
                     
-                    {{ form.description|as_crispy_field }}
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            {{ form.price|as_crispy_field }}
-                        </div>
-                        <div class="col-md-6">
-                            {{ form.condition|as_crispy_field }}
-                        </div>
-                    </div>
-                    
-                    {{ form.image|as_crispy_field }}
-                    
-                    <div class="alert alert-info mt-3">
-                        <i class="bi bi-info-circle me-2"></i>
-                        <small>Upload clear images of your item. Ensure the price is fair and description is accurate.</small>
-                    </div>
-                    
-                    <div class="d-grid gap-2 d-md-flex mt-4">
-                        <button type="submit" class="btn btn-primary btn-lg">
-                            <i class="bi bi-check-circle"></i> {{ submit_text|default:"Submit" }}
-                        </button>
-                        <a href="{{ cancel_url }}" class="btn btn-outline-secondary btn-lg ms-2">
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% if product %}{% url 'marketplace:product_detail' product.id %}{% else %}{% url 'marketplace:home' %}{% endif %}" 
+                           class="btn btn-outline-secondary me-2">
                             Cancel
                         </a>
+                        <button type="submit" class="btn {% if product %}btn-warning{% else %}btn-success{% endif %}">
+                            <i class="fas fa-save me-1"></i>
+                            {% if product %}Update Product{% else %}Create Listing{% endif %}
+                        </button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add Bootstrap classes to form fields
+    document.addEventListener('DOMContentLoaded', function() {
+        const inputs = document.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            if (!input.classList.contains('form-check-input')) {
+                input.classList.add('form-control');
+            }
+        });
+        
+        // Add specific class for checkboxes
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(cb => {
+            cb.classList.add('form-check-input');
+        });
+        
+        // Add class to checkbox labels
+        const checkboxLabels = document.querySelectorAll('label[for*="id_"]');
+        checkboxLabels.forEach(label => {
+            if (label.querySelector('input[type="checkbox"]')) {
+                label.classList.add('form-check-label');
+            }
+        });
+    });
+</script>
 {% endblock %}

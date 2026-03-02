@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            <h3>Become a Verified Seller</h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Benefits of Verification (Ksh 150)</h5>
+                    <ul>
+                        <li>Post up to 10 items at once (instead of 1)</li>
+                        <li>Listings stay active for 30 days (instead of 7)</li>
+                        <li>Get your own store page</li>
+                        <li>Increased buyer trust with "Verified Seller" badge</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">M-Pesa Phone Number</label>
+                            <input type="text" class="form-control" id="phone" name="phone_number" 
+                                   placeholder="0712345678" required>
+                        </div>
+                        <p class="text-muted">You will receive an STK push to complete payment of Ksh 150.</p>
+                        <button type="submit" class="btn btn-success btn-lg">Pay Ksh 150 via M-Pesa</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
