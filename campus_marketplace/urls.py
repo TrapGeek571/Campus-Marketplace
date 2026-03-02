@@ -19,6 +19,7 @@ urlpatterns = [
     path('housing/', include('housing.urls', namespace='housing')),
     path('food/', include('food.urls', namespace='food')),
     path('mpesa/', include('mpesa.urls')),
+    path('accounts/', include('allauth.urls')),
     #path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
 ]
 

@@ -6,3 +6,4 @@ crispy-bootstrap5
 django-crispy-forms
 python-dotenv
 django-leaflet==0.28.3
+PyJWT>=2.11.0
