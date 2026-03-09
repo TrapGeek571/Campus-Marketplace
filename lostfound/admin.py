@@ -21,9 +21,7 @@ class LostFoundItemAdmin(admin.ModelAdmin):
         ('Date & Image', {
             'fields': ('date_lost', 'image', 'image_preview_large')
         }),
-        ('Status', {
-            'fields': ('is_resolved',)
-        }),
+        
         ('Metadata', {
             'fields': ('created_at', 'updated_at'),
             'classes': ('collapse',)

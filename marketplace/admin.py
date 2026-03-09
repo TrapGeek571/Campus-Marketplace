@@ -1,6 +1,7 @@
 # marketplace/admin.py
 from django.contrib import admin
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from .models import Product, Category
 
 class ProductAdmin(admin.ModelAdmin):
@@ -17,9 +18,19 @@ class ProductAdmin(admin.ModelAdmin):
     status_badge.short_description = 'Status'
     
     def image_preview(self, obj):
-        if obj.image:
-            return format_html('<img src="{}" width="50" height="50" style="object-fit: cover;" />', obj.image.url)
-        return format_html('<span class="text-muted">No image</span>')
+        try:
+            if obj.image:
+                # Get the URL – works for both FileField and CloudinaryField
+                if hasattr(obj.image, 'url'):
+                    url = obj.image.url
+                else:
+                    url = obj.image  # assume it's a string URL
+                if url:
+                    # Use mark_safe with an f-string to avoid format_html issues
+                    return mark_safe(f'<img src="{url}" width="50" height="50" style="object-fit: cover;" />')
+        except Exception:
+            pass
+        return mark_safe('<span class="text-muted">No image</span>')
     image_preview.short_description = 'Preview'
     
     def mark_as_sold(self, request, queryset):
