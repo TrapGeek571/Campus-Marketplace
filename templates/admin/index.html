@@ -163,6 +163,11 @@ body {
     color:#e5e7eb;
 }
 
+.stat-icon{
+    font-size:22px;
+    margin-bottom:5px;
+}
+
 </style>
 {% endblock %}
 {% block content %}
@@ -171,18 +176,22 @@ body {
     <h3>📊 Quick Stats</h3>
     <div class="stats-grid">
       <div class="stat-item">
+        <div class="stat-icon">👥</div>
         <span class="stat-value">{{ total_users|default:"0" }}</span>
         <span class="stat-label">Total Users</span>
       </div>
       <div class="stat-item">
+        <div class="stat-icon">🛍️</div>
         <span class="stat-value">{{ active_listings|default:"0" }}</span>
         <span class="stat-label">Active Listings</span>
       </div>
       <div class="stat-item">
+        <div class="stat-icon">📝</div>
         <span class="stat-value">{{ pending_reports|default:"0" }}</span>
         <span class="stat-label">Pending Reports</span>
       </div>
       <div class="stat-item">
+        <div class="stat-icon">🔥</div>
         <span class="stat-value">{{ today_activity|default:"0" }}</span>
         <span class="stat-label">Today's Activity</span>
       </div>
@@ -281,6 +290,36 @@ body {
       }
     }
   });
+});
+function animateValue(obj, start, end, duration) {
+    let startTimestamp = null;
+
+    const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+
+        obj.textContent = Math.floor(progress * (end - start) + start);
+
+        if (progress < 1) {
+            window.requestAnimationFrame(step);
+        }
+    };
+
+    window.requestAnimationFrame(step);
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const stats = document.querySelectorAll(".stat-value");
+
+    stats.forEach(stat => {
+        const finalValue = parseInt(stat.textContent) || 0;
+        stat.textContent = 0;
+
+        animateValue(stat, 0, finalValue, 1200);
+    });
+
 });
 </script>
 
